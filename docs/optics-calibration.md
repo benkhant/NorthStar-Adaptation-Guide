@@ -7,9 +7,9 @@
 
 - First, download the realsense-integration branch of the following repo: https://github.com/BryanChrisBrown/ProjectNorthStar/tree/realsense-integration, and you will get a ProjectNorthStar-realsense-integration file
 - Setup python with the following dependencies: 
-- Pyrealsense2
-- opencv-contrib-python
-- numpy 
+  - Pyrealsense2
+  - opencv-contrib-python
+  - numpy 
 
 - In the ProjectNorthStar-realsense-integration file, go to Software → North Star Gen 2 → North Star Calibrator → captureGraycodes.py, then run the captureGraycodes.py 
 - Make sure the T261 camera, which is screwed onto the mount, is looking through the headset where the users’ eyes will be
