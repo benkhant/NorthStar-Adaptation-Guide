@@ -46,4 +46,4 @@
 - Use the strap_adapter_1_left stl and strap_adapter_1_right stl to print out the straps
 - Secure the left and right head strap adapters with M2x8 screws (see red arrows)
 
-## (continue head strap assembly)
+## (continue head strap assembly & add pics)
