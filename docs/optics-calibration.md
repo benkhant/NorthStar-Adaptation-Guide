@@ -43,5 +43,3 @@
   ![](images/final-calibration-result.png)
 
 - Also note that dust on the display and lenses can affect calibration result
-
-# (add pics)
