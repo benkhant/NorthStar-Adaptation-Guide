@@ -7,6 +7,8 @@
 
 - I set up the headset and the T261 camera, as seen below, to calibrate
 
+  ![](images/calibration-setup-front-view.png) ![](images/calibration-setup-back-view.png)
+
 - First, download the realsense-integration branch of the following repo: https://github.com/BryanChrisBrown/ProjectNorthStar/tree/realsense-integration, and you will get a ProjectNorthStar-realsense-integration file
 - Setup python with the following dependencies: 
   - Pyrealsense2
