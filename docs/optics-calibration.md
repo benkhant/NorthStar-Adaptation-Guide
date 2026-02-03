@@ -2,7 +2,7 @@
 
 - Use the T261_calibration_mount stl file to print out the calibration mount
 - Screw the T261 camera on the calibration mount as below
-  (images/t261-calibration-mount.png)
+!(images/t261-calibration-mount.png)
 
 - I set up the headset and the T261 camera, as seen below, to calibrate
 
