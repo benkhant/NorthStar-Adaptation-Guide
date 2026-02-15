@@ -57,13 +57,19 @@
 - Secure the display driver with an M2x5 screw
 
 - Then use the electronic_lid stl file to print out the lid
+
+  ![](images/electronic-lid.png)
   
 - Then, carefully route all cables through the designated slots (see image above)
 - Secure the lid with five M2x5 screws
 
 - Secure the combiner with two M2x8 screws (see red arrows) and two M2 self-tapping screws (see yellow arrows)
 
+  ![](images/combiner.png)
+
 - Use the strap_adapter_1_left stl and strap_adapter_1_right stl to print out the straps
 - Secure the left and right head strap adapters with M2x8 screws (see red arrows)
 
-## (continue head strap assembly & add pics)
+  ![](images/head-strap-adapters.png)
+
+## (continue head strap assembly)
