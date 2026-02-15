@@ -13,28 +13,46 @@
 - First, print the optic bracket stl file, then install M2 heat inserts into the optic bracket (red arrows below)
 - Install M2.5 heat inserts (yellow arrows below)
   
-![](images/optics-bracket.png)
+  ![](images/optics-bracket.png)
 
 - Connect the long ribbon cable to the adapter board (ensure the orientation of the ribbon cable is correct, see image below)
 - Then, connect the display to the adapter board (ensure the orientation of the adapter board is correct, see image below)
 
+  ![](images/display.png)
+
 - Pull the ribbon cable through the hole in the optic bracket (red arrows in images below)
 - Carefully fold the display cable and insert both the display and the adapter board into the slot of the optic bracket
 
+  ![](images/display-cable.png)
+
 - When inserting, you will need some force to make it all the way in
+
+  ![](images/insert-display.png)
 
 - Use the display_holder_left stl file and display_holder_right stl file to print the display holder for left side and right side to secure the display with an M2x8 screw
 
+  ![](images/display-holder.png)
+
 - Repeat the steps from above for the second display
 
+  ![](images/second-display-holder.png)
+
 - Use the electronic-bay stl file to print it out and install M2 heat inserts into it (see red arrows below)
+
+  ![](images/electronic-bay.png)
 
 - Connect the USB hub to the display driver using the 12-pin FFC cable
 - Secure the USB hub with two M2x4 screws (do not secure the display driver yet)
 
+  ![](images/USB-hub.png)
+
 - Secure the electronics bay to the optic bracket with four M2x5 screws (see red arrows below)
 
+  ![](images/secure-electronics-bay.png)
+
 - Connect the left and right displays to the display driver (ensure the orientation of the ribbon cable is correct (see image below)
+
+  ![](images/connect-display-driver.png)
 
 - Secure the display driver with an M2x5 screw
 
