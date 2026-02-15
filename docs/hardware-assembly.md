@@ -12,6 +12,8 @@
 - Go to the 3d-printing-stl folder in the github to get the stl files for 3D printing 
 - First, print the optic bracket stl file, then install M2 heat inserts into the optic bracket (red arrows below)
 - Install M2.5 heat inserts (yellow arrows below)
+  
+![](images/optics-bracket.png)
 
 - Connect the long ribbon cable to the adapter board (ensure the orientation of the ribbon cable is correct, see image below)
 - Then, connect the display to the adapter board (ensure the orientation of the adapter board is correct, see image below)
