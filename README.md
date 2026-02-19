@@ -1,7 +1,5 @@
 # NorthStar Adaptation Guide (Work In Progress)
 ### A Practical Guide to Building and Documenting a Low-Cost Open-Source Optical See-Through AR Headset
-![Status](https://img.shields.io/badge/status-work_in_progress-orange)
-
 
 This repository documents the adaptation of Project North Star into a low-cost, reproducible, and well-documented optical see-through augmented reality (OST-AR) headset for computing education.
 
