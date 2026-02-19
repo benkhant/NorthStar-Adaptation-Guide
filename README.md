@@ -56,8 +56,7 @@ All printable components are located in:
 
 [3D Printing Files](3d-printing-stl)
 
-Each file includes:
-- STL model
+Each file includes STL model.
 
 ---
 
