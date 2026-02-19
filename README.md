@@ -9,7 +9,7 @@ The primary focus of this project is not only building functional hardware, but 
 
 ## Why This Project?
 
-Commercial optical see-through AR headsets remain costly and closed-source, limiting classroom adoption. This project aims to lower those barriers by providing a transparent, replicable, and well-documented alternative for educational use.
+Commercial optical see-through AR headsets remain costly, proprietary, and difficult to deploy in classroom settings. This project aims to lower those barriers by providing a transparent, replicable, and well-documented alternative tailored for computing education.
 
 ---
 
