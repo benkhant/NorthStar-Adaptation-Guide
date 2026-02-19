@@ -23,6 +23,8 @@ The primary focus of this project is not only building the hardware, but systema
 
 ## Hardware Assembly
 
+This guide is still under development. Headstrap assembly section coming soon.
+
 Mechanical assembly instructions are available here:
 
 [Hardware Assembly Guide](docs/hardware-assembly.md)
