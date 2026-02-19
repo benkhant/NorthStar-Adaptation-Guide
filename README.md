@@ -1,4 +1,4 @@
-# NorthStar Adaptation Guide (Work In Progress)
+# NorthStar Adaptation Guide
 
 > ⚠ Work in Progress: Hardware prototype complete. Documentation and software modules under active development.
 
