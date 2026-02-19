@@ -25,7 +25,7 @@ The primary focus of this project is not only building the hardware, but systema
 
 Full mechanical assembly instructions are available here:
 
-➡️ [Hardware Assembly Guide](docs/hardware-assembly.md)
+[Hardware Assembly Guide](docs/hardware-assembly.md)
 
 Includes:
 - Required components
@@ -40,7 +40,7 @@ Includes:
 
 Calibration documentation is available here:
 
-➡️ [Optics Calibration Guide](docs/optics-calibration.md)
+ [Optics Calibration Guide](docs/optics-calibration.md)
 
 Includes:
 - Checkerboard-based alignment procedure
