@@ -1,9 +1,9 @@
 # NorthStar Adaptation Guide (Work In Progress)
 ### A Practical Guide to Building and Documenting a Low-Cost Open-Source Optical See-Through AR Headset
 
-This repository documents the adaptation of Project North Star into a low-cost, reproducible, and well-documented optical see-through augmented reality (OST-AR) headset for computing education.
+This repository documents the adaptation of Project North Star into a low-cost, reproducible, and fully documented optical see-through augmented reality (OST-AR) headset designed for computing education. The project establishes a transparent hardware and calibration foundation that enables the development of interactive AR learning software.
 
-The primary focus of this project is not only building the hardware, but systematically documenting the process to lower financial and technical barriers for classroom deployment.
+The primary focus of this project is not only building functional hardware, but systematically documenting the entire build process to lower financial and technical barriers for classroom deployment and future AR software development.
 
 ---
 
@@ -54,7 +54,7 @@ All printable components are located in:
 
 [3D Printing Files](3d-printing-stl)
 
-Each file includes STL model.
+Each component is provided as an STL file for direct printing.
 
 ---
 
@@ -70,15 +70,15 @@ Filament costs are calculated using:
 - Cost per gram (based on spool price)
 - Total print cost per component
 
-A detailed cost breakdown spreadsheet will be published in this repository.
+A detailed bill of materials and cost breakdown spreadsheet will be published in this repository.
 
 ---
 
 ## Current Status
 
-- ✅ Hardware prototype constructed  
-- ✅ Mechanical documentation completed  
+- ✅ Hardware prototype constructed
 - ✅ Optics calibration workflow established  
+- 🚧 Mechanical documentation in progress  
 - 🚧 Interactive AR educational software in development  
 - 🚧 Classroom pilot evaluation planned  
 
