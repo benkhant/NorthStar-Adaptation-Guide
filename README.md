@@ -1,9 +1,15 @@
 # NorthStar Adaptation Guide (Work In Progress)
 ### A Practical Guide to Building and Documenting a Low-Cost Open-Source Optical See-Through AR Headset
 
-This repository documents the adaptation of Project North Star into a low-cost, reproducible, and fully documented optical see-through augmented reality (OST-AR) headset designed for computing education. The project establishes a transparent hardware and calibration foundation that enables the development of interactive AR learning software.
+This repository documents the adaptation of Project North Star into a low-cost, reproducible, and well-documented optical see-through augmented reality (OST-AR) headset for computing education. The project establishes a transparent hardware and calibration foundation that supports future development of interactive AR learning software.
 
-The primary focus of this project is not only building functional hardware, but systematically documenting the entire build process to lower financial and technical barriers for classroom deployment and future AR software development.
+The primary focus of this project is not only building functional hardware, but systematically documenting the entire build process to lower financial and technical barriers to classroom deployment and future AR software development.
+
+---
+
+## Why This Project?
+
+Commercial optical see-through AR headsets remain costly and closed-source, limiting classroom adoption. This project aims to lower those barriers by providing a transparent, replicable, and well-documented alternative for educational use.
 
 ---
 
@@ -86,7 +92,7 @@ A detailed bill of materials and cost breakdown spreadsheet will be published in
 
 ## Software (Next Phase)
 
-The current prototype operates as a secondary display driven by a host laptop. Development is underway to integrate interactive AR visualizations for computing education, including:
+The current prototype operates as a secondary display driven by a host laptop. Development is underway to integrate interactive AR visualizations for computing education, beginning with:
 
 - Quicksort partition step walkthrough
 - Linked list pointer updates
