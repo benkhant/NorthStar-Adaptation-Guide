@@ -17,10 +17,6 @@ The primary focus of this project is not only building the hardware, but systema
 
 ---
 
-## Repository Structure
-
----
-
 ## Hardware Assembly
 
 This guide is still under development. Headstrap assembly section coming soon.
