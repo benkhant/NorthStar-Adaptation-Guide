@@ -84,6 +84,17 @@ Filament costs are calculated using:
 
 ---
 
+## Software (Next Phase)
+
+The current prototype operates as a secondary display driven by a host laptop. Development is underway to integrate interactive AR visualizations for computing education, including:
+
+- Quicksort partition step walkthrough
+- Linked list pointer updates
+
+Future work will include classroom pilots and evaluation of learning impact.
+
+--
+
 ## Acknowledgements
 
 Inspired by Project North Star.
