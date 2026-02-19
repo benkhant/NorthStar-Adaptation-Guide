@@ -1,15 +1,18 @@
 # NorthStar Adaptation Guide (Work In Progress)
+
+> ⚠ Work in Progress: Hardware prototype complete. Documentation and software modules under active development.
+
 ### A Practical Guide to Building and Documenting a Low-Cost Open-Source Optical See-Through AR Headset
 
-This repository documents the adaptation of Project North Star into a low-cost, reproducible, and well-documented optical see-through augmented reality (OST-AR) headset for computing education. The project establishes a transparent hardware and calibration foundation that supports future development of interactive AR learning software.
+This repository documents the adaptation of Project North Star into a low-cost, reproducible, and well-documented optical see-through augmented reality (OST-AR) headset for computing education. The project establishes a transparent hardware and calibration foundation to support future development of interactive AR learning software.
 
-The primary focus of this project is not only building functional hardware, but systematically documenting the entire build process to lower financial and technical barriers to classroom deployment and future AR software development.
+Rather than focusing solely on hardware construction, this project emphasizes systematic documentation of the entire build process to lower financial and technical barriers to classroom deployment and future AR software development.
 
 ---
 
 ## Why This Project?
 
-Commercial optical see-through AR headsets remain costly, proprietary, and difficult to deploy in classroom settings. This project aims to lower those barriers by providing a transparent, replicable, and well-documented alternative tailored for computing education.
+Commercial optical see-through AR headsets remain costly, proprietary, and difficult to deploy in classroom settings. This project aims to lower those barriers by providing a transparent, replicable, and well-documented alternative specifically tailored for computing education.
 
 ---
 
@@ -25,7 +28,7 @@ Commercial optical see-through AR headsets remain costly, proprietary, and diffi
 
 ## Hardware Assembly
 
-This guide is still under development. Headstrap assembly section coming soon.
+This guide is under active development. The headstrap assembly section will be added in a future update.
 
 Mechanical assembly instructions are available here:
 
@@ -76,7 +79,7 @@ Filament costs are calculated using:
 - Cost per gram (based on spool price)
 - Total print cost per component
 
-A detailed bill of materials and cost breakdown spreadsheet will be published in this repository.
+A detailed bill of materials and cost breakdown spreadsheet will be published in this repository to support reproducibility.
 
 ---
 
