@@ -23,6 +23,7 @@ Commercial optical see-through AR headsets remain costly, proprietary, and diffi
 - Develop a repeatable optics calibration workflow  
 - Publish a transparent bill of materials with cost breakdown  
 - Enable reproducibility for educators and researchers  
+- Establish a hardware foundation for interactive AR learning software
 
 ---
 
