@@ -72,6 +72,8 @@ Filament costs are calculated using:
 - Cost per gram (based on spool price)
 - Total print cost per component
 
+A detailed cost breakdown spreadsheet will be published in this repository.
+
 ---
 
 ## Current Status
