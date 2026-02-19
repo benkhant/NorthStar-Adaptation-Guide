@@ -93,8 +93,6 @@ The current prototype operates as a secondary display driven by a host laptop. D
 
 Future work will include classroom pilots and evaluation of learning impact.
 
---
-
 ## Acknowledgements
 
 Inspired by Project North Star.
