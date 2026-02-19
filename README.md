@@ -54,7 +54,7 @@ Includes:
 
 All printable components are located in:
 
-[]()
+[](3d-printing-stl)
 
 Each file includes:
 - STL model
