@@ -54,12 +54,10 @@ Includes:
 
 All printable components are located in:
 
-[](3d-printing-stl)
+[3D Printing Files](3d-printing-stl)
 
 Each file includes:
 - STL model
-- Filament usage data
-- Cost-per-gram calculation method
 
 ---
 
