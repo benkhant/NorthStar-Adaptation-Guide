@@ -7,7 +7,7 @@ The primary focus of this project is not only building the hardware, but systema
 
 ---
 
-## 🎯 Project Goals
+## Project Goals
 
 - Adapt an open-source AR headset for educational use  
 - Provide clear mechanical assembly documentation  
@@ -17,11 +17,11 @@ The primary focus of this project is not only building the hardware, but systema
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 ---
 
-## 🛠 Hardware Assembly
+## Hardware Assembly
 
 Full mechanical assembly instructions are available here:
 
@@ -36,7 +36,7 @@ Includes:
 
 ---
 
-## 🔬 Optics Calibration
+## Optics Calibration
 
 Calibration documentation is available here:
 
@@ -50,7 +50,7 @@ Includes:
 
 ---
 
-## 🧩 3D-Printable Components
+## 3D-Printable Components
 
 All printable components are located in:
 
@@ -61,7 +61,7 @@ Each file includes:
 
 ---
 
-## 💰 Cost Transparency
+## Cost Transparency
 
 This build prioritizes affordability using:
 - Commodity electronics
@@ -75,7 +75,7 @@ Filament costs are calculated using:
 
 ---
 
-## 📌 Current Status
+## Current Status
 
 - ✅ Hardware prototype constructed  
 - ✅ Mechanical documentation completed  
@@ -85,7 +85,7 @@ Filament costs are calculated using:
 
 ---
 
-## 🙌 Acknowledgements
+## Acknowledgements
 
 Inspired by Project North Star.
 
