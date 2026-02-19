@@ -23,7 +23,7 @@ The primary focus of this project is not only building the hardware, but systema
 
 ## Hardware Assembly
 
-Full mechanical assembly instructions are available here:
+Mechanical assembly instructions are available here:
 
 [Hardware Assembly Guide](docs/hardware-assembly.md)
 
@@ -53,6 +53,8 @@ Includes:
 ## 3D-Printable Components
 
 All printable components are located in:
+
+[]()
 
 Each file includes:
 - STL model
