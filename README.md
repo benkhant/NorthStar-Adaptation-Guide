@@ -94,14 +94,42 @@ A detailed bill of materials and cost breakdown spreadsheet will be published in
 
 ---
 
-## Software (Next Phase)
+## Software: AR Linked List Activity
 
-The current prototype operates as a secondary display driven by a host laptop. Development is underway to integrate interactive AR visualizations for computing education, beginning with:
+An interactive AR learning activity has been developed for visualizing 
+linked list pointer operations using image tracking on an Android tablet.
 
-- Quicksort partition step walkthrough
-- Linked list pointer updates
+The activity is located in the [`software/`](software/) folder.
 
-Future work will include classroom pilots and evaluation of learning impact.
+### How It Works
+Students physically manipulate printed marker cards on a table. 
+The tablet camera detects the cards and augments the scene with:
+- Blue numbered nodes floating above each node card
+- Orange dots above tail cards (outgoing pointers)
+- Purple dots above head cards (incoming connections)
+- Green arrows for correct pointer connections
+- Red arrows for incorrect connections
+- Live task instructions guiding students through insertion
+
+### Activity Flow
+1. Place all node cards on the table
+2. Connect tail and head cards to build the starting list: 10 → 15 → 30 → 45
+3. Insert node 20 by moving tail_15 to head_20 and tail_20 to head_30
+4. Complete the insertion: 10 → 15 → 20 → 30 → 45
+
+### Requirements
+- Unity 2022.3 LTS
+- AR Foundation
+- Android tablet with ARCore support
+- 13 printed marker cards (see `software/Assets/Markers/`)
+
+### Current Status
+- ✅ Image tracking with 13 marker cards
+- ✅ Dynamic arrow drawing with color feedback
+- ✅ Task instruction system
+- ✅ Node insertion activity
+- 🚧 Pilot evaluation planned
+- 🚧 Port to North Star HMD in progress
 
 ---
 
