@@ -230,6 +230,17 @@ public class TaskManager : MonoBehaviour
                 spawnedNodes[key].GetComponent<NodeColorController>();
             if (colorController == null) continue;
 
+            if (key == "node_30")
+            {
+                if (currentState == TaskState.ShowingStartList ||
+                    currentState == TaskState.RemoveNode20 ||
+                    currentState == TaskState.DeletionComplete)
+                    colorController.SetCorrect();
+                else
+                    colorController.SetDefault();
+                continue;
+            }
+
             string tailName = "tail_" + key.Split('_')[1];
 
             if (IsNodeCorrectlyLinked(tailName))
