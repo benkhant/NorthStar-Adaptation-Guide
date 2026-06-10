@@ -3,64 +3,63 @@ using UnityEngine;
 using TMPro;
 
 // This script manages the task instructions and tracks progress
-// through the linked list insertion activity.
-// It watches what cards are on the table, figures out what stage
-// the student is at, shows the right instruction text, and colors
-// nodes green or blue based on whether they are correctly linked.
+// through the linked list deletion activity.
+// Students remove node 20 from the list 10 -> 20 -> 30
+// by first updating the linkages then physically removing the node card.
 public class TaskManager : MonoBehaviour
 {
-    // The floating text that shows instructions to the student
     [SerializeField] TextMeshPro instructionText;
 
-    // Latest positions of all detected marker cards
     private Dictionary<string, GameObject> spawnedNodes;
     private Dictionary<string, GameObject> spawnedTails;
     private Dictionary<string, GameObject> spawnedHeads;
 
-    // Same threshold as ArrowManager — cards must be within 15cm to count as connected
+    private float deletionTimer = 0f;
+    private bool countingDown = false;
+
     private float connectionThreshold = 0.15f;
 
-    // The four stages of the activity
-    // The current state determines what instruction is shown and
-    // which connections count as correct for node color feedback
     public enum TaskState
     {
-        PlacingNodes,       // not enough node cards on the table yet
-        BuildingStartList,  // all nodes visible, building 10->15->30->45
-        InsertingNode20,    // start list correct, now inserting node 20
-        InsertionComplete   // full list 10->15->20->30->45 is correct
+        PlacingNodes,       // waiting for all 3 node cards
+        BuildingStartList,  // guides student to build 10 -> 20 -> 30
+        ShowingStartList,   // all nodes placed — showing starting state
+        RemoveNode20,       // remove node_20 card from table
+        DeletionComplete    // node_20 removed — done
     }
 
-    // Tracks which stage the student is currently at
-    // Public so ArrowManager can read it for color feedback
     public TaskState currentState = TaskState.PlacingNodes;
 
-    // The correct connections before node 20 is inserted
-    // 10 -> 15 -> 30 -> 45
+    // Correct starting connections: 10 -> 20 -> 30
     private Dictionary<string, string> correctBefore =
         new Dictionary<string, string>
     {
-        { "tail_10", "head_15" },
-        { "tail_15", "head_30" },
-        { "tail_30", "head_45" }
+        { "tail_10", "head_20" },
+        { "tail_20", "head_30" }
     };
 
-    // The correct connections after node 20 is inserted
-    // 10 -> 15 -> 20 -> 30 -> 45
-    private Dictionary<string, string> correctInsertion =
+    // Correct connections after updating linkages: 10 -> 30
+    private Dictionary<string, string> correctAfter =
         new Dictionary<string, string>
     {
-        { "tail_10", "head_15" },
-        { "tail_15", "head_20" },
-        { "tail_20", "head_30" },
-        { "tail_30", "head_45" }
+        { "tail_10", "head_30" }
     };
 
-    // Runs every frame — checks the current state of the table
-    // and shows the appropriate instruction text
     void Update()
     {
-        // No cards detected yet — show the starting message
+        // timer runs after student is told to remove node_20 group
+        if (countingDown)
+        {
+            deletionTimer += Time.deltaTime;
+            if (deletionTimer >= 5f)
+            {
+                currentState = TaskState.DeletionComplete;
+                instructionText.text = "Deletion complete!\n10 -> 30\nNode 20 has been removed from memory";
+                countingDown = false;
+            }
+            return;
+        }
+
         if (spawnedNodes == null || spawnedNodes.Count == 0)
         {
             currentState = TaskState.PlacingNodes;
@@ -70,63 +69,69 @@ public class TaskManager : MonoBehaviour
 
         int visibleNodes = CountVisible(spawnedNodes);
 
-        // Not enough node cards on the table yet
-        if (visibleNodes < 4)
+        if (visibleNodes < 3)
         {
             currentState = TaskState.PlacingNodes;
-            instructionText.text = "Place node cards on the table\n"
-                + visibleNodes + " nodes detected";
+            instructionText.text = "Place all 3 node cards on the table\n"
+                + visibleNodes + "/3 nodes detected";
             UpdateNodeColors();
             return;
         }
 
-        // Base 4 nodes are visible but node 20 has not been placed yet
-        bool node20Visible = spawnedNodes.ContainsKey("node_20") &&
-                             spawnedNodes["node_20"].activeSelf;
-        if (!node20Visible && visibleNodes >= 4)
+        // Step 3 — pointer redirected, start countdown
+        bool tail10Correct = IsTailCorrectlyConnected("tail_10", "head_30");
+        if (tail10Correct && !countingDown)
         {
-            currentState = TaskState.PlacingNodes;
-            instructionText.text = "Good! Now place node 20 on the table\nbetween node 15 and node 30";
+            currentState = TaskState.RemoveNode20;
+            instructionText.text = "Pointer updated!\nNode 20 is now unreachable\nRemove node_20, head_20, and tail_20 cards from the table";
+            countingDown = true;
+            deletionTimer = 0f;
             UpdateNodeColors();
             return;
         }
 
-        // Check insertion complete first — it is the goal state
-        if (IsLinkageCorrect(correctInsertion))
-        {
-            currentState = TaskState.InsertionComplete;
-            instructionText.text = "Insertion complete!\n10 -> 15 -> 20 -> 30 -> 45";
-            UpdateNodeColors();
-            return;
-        }
-
-        // Starting list is correct — guide student to perform the insertion
+        // Step 2 — starting list built
         if (IsLinkageCorrect(correctBefore))
         {
-            currentState = TaskState.BuildingStartList;
-            instructionText.text = "Starting list correct!\nNow insert node 20\nMove tail_15 to head_20 and tail_20 to head_30";
+            currentState = TaskState.ShowingStartList;
+            instructionText.text = "The list is: 10 -> 20 -> 30\nTask: Remove node 20\nMove tail_10 to head_30 to redirect the pointer";
             UpdateNodeColors();
             return;
         }
 
-        // All nodes visible but connections not correct yet
-        currentState = TaskState.InsertingNode20;
-        instructionText.text = "Connect tail and head cards\nto build: 10 -> 15 -> 30 -> 45";
+        // Step 1b — one connection done
+        bool tail10Connected = IsTailCorrectlyConnected("tail_10", "head_20");
+        bool tail20Connected = IsTailCorrectlyConnected("tail_20", "head_30");
+
+        if (tail10Connected && !tail20Connected)
+        {
+            currentState = TaskState.BuildingStartList;
+            instructionText.text = "Good! Now connect tail_20 to head_30";
+            UpdateNodeColors();
+            return;
+        }
+
+        if (!tail10Connected && tail20Connected)
+        {
+            currentState = TaskState.BuildingStartList;
+            instructionText.text = "Good! Now connect tail_10 to head_20";
+            UpdateNodeColors();
+            return;
+        }
+
+        // Step 1a — nothing connected yet
+        currentState = TaskState.BuildingStartList;
+        instructionText.text = "All nodes placed!\nConnect tail_10 to head_20\nand tail_20 to head_30";
         UpdateNodeColors();
     }
 
-    // Runs after Update every frame — keeps the instruction text
-    // floating in front of the camera at a comfortable reading position
     void LateUpdate()
     {
         if (Camera.main != null)
         {
-            // Place text 40cm in front of camera and 10cm above center
             instructionText.transform.position = Camera.main.transform.position +
                 Camera.main.transform.forward * 0.4f +
                 Vector3.up * 0.1f;
-
-            // Rotate text to face the camera while staying upright
             Vector3 directionToCamera = Camera.main.transform.position -
                 instructionText.transform.position;
             directionToCamera.y = 0;
@@ -138,8 +143,6 @@ public class TaskManager : MonoBehaviour
         }
     }
 
-    // Called by TrackedImageInfo whenever any marker card changes
-    // Keeps the local card positions up to date
     public void UpdateMarkers(
         Dictionary<string, GameObject> nodes,
         Dictionary<string, GameObject> tails,
@@ -150,7 +153,6 @@ public class TaskManager : MonoBehaviour
         spawnedHeads = heads;
     }
 
-    // Counts how many objects in a dictionary are currently visible
     int CountVisible(Dictionary<string, GameObject> dict)
     {
         int count = 0;
@@ -161,9 +163,22 @@ public class TaskManager : MonoBehaviour
         return count;
     }
 
-    // Checks whether the physical card arrangement matches an expected linkage
-    // Every tail in the expected linkage must be within 15cm of its expected head
-    // If even one pair is missing or too far apart the whole check fails
+    // Checks if a specific tail is connected to a specific head
+    bool IsTailCorrectlyConnected(string tailName, string headName)
+    {
+        if (spawnedTails == null || spawnedHeads == null) return false;
+        if (!spawnedTails.ContainsKey(tailName) ||
+            !spawnedTails[tailName].activeSelf) return false;
+        if (!spawnedHeads.ContainsKey(headName) ||
+            !spawnedHeads[headName].activeSelf) return false;
+
+        float distance = Vector3.Distance(
+            spawnedTails[tailName].transform.position,
+            spawnedHeads[headName].transform.position);
+
+        return distance <= connectionThreshold;
+    }
+
     bool IsLinkageCorrect(Dictionary<string, string> expectedLinkage)
     {
         if (spawnedTails == null || spawnedHeads == null) return false;
@@ -173,15 +188,12 @@ public class TaskManager : MonoBehaviour
             string tailName = link.Key;
             string expectedHead = link.Value;
 
-            // Tail card must be visible
             if (!spawnedTails.ContainsKey(tailName) ||
                 !spawnedTails[tailName].activeSelf) return false;
 
-            // Expected head card must be visible
             if (!spawnedHeads.ContainsKey(expectedHead) ||
                 !spawnedHeads[expectedHead].activeSelf) return false;
 
-            // Tail and head must be physically close enough to count as connected
             float distance = Vector3.Distance(
                 spawnedTails[tailName].transform.position,
                 spawnedHeads[expectedHead].transform.position);
@@ -191,14 +203,11 @@ public class TaskManager : MonoBehaviour
         return true;
     }
 
-    // Colors each visible node green if its tail is correctly linked
-    // or resets it to default blue if not
     void UpdateNodeColors()
     {
         if (spawnedNodes == null) return;
 
-        string[] allNodes = { "node_10", "node_15", "node_20",
-                              "node_30", "node_45" };
+        string[] allNodes = { "node_10", "node_20", "node_30" };
 
         foreach (var key in allNodes)
         {
@@ -209,30 +218,27 @@ public class TaskManager : MonoBehaviour
                 spawnedNodes[key].GetComponent<NodeColorController>();
             if (colorController == null) continue;
 
-            // Convert node name to tail name e.g. "node_15" -> "tail_15"
             string tailName = "tail_" + key.Split('_')[1];
 
             if (IsNodeCorrectlyLinked(tailName))
-                colorController.SetCorrect(); // green
+                colorController.SetCorrect();
             else
-                colorController.SetDefault(); // blue
+                colorController.SetDefault();
         }
     }
 
-    // Checks whether a specific tail card is correctly connected
-    // based on the current task state
-    // Uses correctInsertion during insertion stage and correctBefore otherwise
     bool IsNodeCorrectlyLinked(string tailName)
     {
         if (spawnedTails == null || spawnedHeads == null) return false;
         if (!spawnedTails.ContainsKey(tailName) ||
             !spawnedTails[tailName].activeSelf) return false;
 
-        // Pick the right answer key based on what stage the student is at
+        // Use correctAfter during deletion stages
+        // Use correctBefore during setup stage
         Dictionary<string, string> targetLinkage =
-            currentState == TaskState.InsertionComplete ||
-            currentState == TaskState.InsertingNode20
-            ? correctInsertion : correctBefore;
+            currentState == TaskState.DeletionComplete ||
+            currentState == TaskState.RemoveNode20
+            ? correctAfter : correctBefore;
 
         if (!targetLinkage.ContainsKey(tailName)) return false;
 
@@ -241,7 +247,6 @@ public class TaskManager : MonoBehaviour
         if (!spawnedHeads.ContainsKey(expectedHead) ||
             !spawnedHeads[expectedHead].activeSelf) return false;
 
-        // Check the tail and its expected head are physically close enough
         float distance = Vector3.Distance(
             spawnedTails[tailName].transform.position,
             spawnedHeads[expectedHead].transform.position);
@@ -249,8 +254,6 @@ public class TaskManager : MonoBehaviour
         return distance <= connectionThreshold;
     }
 
-    // These allow ArrowManager to access the correct linkage dictionaries
-    // without making them fully public
     public Dictionary<string, string> GetCorrectBefore() => correctBefore;
-    public Dictionary<string, string> GetCorrectInsertion() => correctInsertion;
+    public Dictionary<string, string> GetCorrectAfter() => correctAfter;
 }

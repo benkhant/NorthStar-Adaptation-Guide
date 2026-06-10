@@ -34,9 +34,7 @@ public class ArrowManager : MonoBehaviour
         new Dictionary<string, string>
     {
         { "tail_10", "node_10" },
-        { "tail_15", "node_15" },
-        { "tail_20", "node_20" },
-        { "tail_30", "node_30" }
+        { "tail_20", "node_20" }
     };
 
     // Called by TrackedImageInfo whenever any marker card changes
@@ -182,16 +180,14 @@ public class ArrowManager : MonoBehaviour
         string headNumber = headName.Split('_')[1];
         if (tailNumber == headNumber) return false;
 
-        // All valid connections based on the linked list 10 -> 15 -> 20 -> 30 -> 45
-        // tail_15 has two valid targets because it points to head_30 before insertion
-        // and head_20 after insertion — both are correct at different stages
+        // All valid connections based on the linked list 10 -> 20 -> 30
+        // tail_10 has two valid targets because it points to head_20 before deletion
+        // and head_30 after deletion — both are correct at different stages
         Dictionary<string, List<string>> validConnections =
             new Dictionary<string, List<string>>
         {
-            { "tail_10", new List<string> { "head_15" } },
-            { "tail_15", new List<string> { "head_20", "head_30" } },
-            { "tail_20", new List<string> { "head_30" } },
-            { "tail_30", new List<string> { "head_45" } }
+            { "tail_10", new List<string> { "head_20", "head_30" } },
+            { "tail_20", new List<string> { "head_30" } }
         };
 
         if (!validConnections.ContainsKey(tailName)) return false;
