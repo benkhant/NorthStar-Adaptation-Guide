@@ -88,7 +88,6 @@ public class ArrowManager : MonoBehaviour
         foreach (var tailEntry in tailToNode)
         {
             string tailName = tailEntry.Key;
-            string nodeName = tailEntry.Value;
 
             // If the tail card is not visible hide its arrow and move on
             bool tailVisible = spawnedTails.ContainsKey(tailName) &&
@@ -108,14 +107,7 @@ public class ArrowManager : MonoBehaviour
             {
                 Vector3 headPosition = spawnedHeads[nearestHead].transform.position;
 
-                // Start the arrow from the node box if visible
-                // otherwise fall back to starting from the tail dot
                 Vector3 startPosition = tailPosition;
-                if (spawnedNodes.ContainsKey(nodeName) &&
-                    spawnedNodes[nodeName].activeSelf)
-                {
-                    startPosition = spawnedNodes[nodeName].transform.position;
-                }
 
                 // Check if this connection follows the correct linked list order
                 bool isCorrect = IsCorrectConnection(tailName, nearestHead);
