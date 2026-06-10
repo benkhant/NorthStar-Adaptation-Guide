@@ -894,6 +894,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   instructionText: {fileID: 890939009}
+  trackedImageInfo: {fileID: 2114268440}
   currentState: 0
 --- !u!4 &1084873080
 Transform:

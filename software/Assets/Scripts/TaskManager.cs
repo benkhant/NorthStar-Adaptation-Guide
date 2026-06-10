@@ -9,6 +9,7 @@ using TMPro;
 public class TaskManager : MonoBehaviour
 {
     [SerializeField] TextMeshPro instructionText;
+    [SerializeField] TrackedImageInfo trackedImageInfo;
 
     private Dictionary<string, GameObject> spawnedNodes;
     private Dictionary<string, GameObject> spawnedTails;
@@ -47,18 +48,29 @@ public class TaskManager : MonoBehaviour
 
     void Update()
     {
+        Debug.Log($"state={currentState} countingDown={countingDown} timer={deletionTimer:F1}");
+
         // timer runs after student is told to remove node_20 group
         if (countingDown)
         {
             deletionTimer += Time.deltaTime;
-            if (deletionTimer >= 5f)
+            Debug.Log($"deletion timer={deletionTimer:F1}s");
+            if (deletionTimer >= 7f)
             {
                 currentState = TaskState.DeletionComplete;
                 instructionText.text = "Deletion complete!\n10 -> 30\nNode 20 has been removed from memory";
                 countingDown = false;
+
+                // hide node_20 group immediately on completion
+                trackedImageInfo.LockHidden("node_20");
+                trackedImageInfo.LockHidden("head_20");
+                trackedImageInfo.LockHidden("tail_20");
+                Debug.Log("Deletion complete fired");
             }
             return;
         }
+
+        if (currentState == TaskState.DeletionComplete) return;
 
         if (spawnedNodes == null || spawnedNodes.Count == 0)
         {

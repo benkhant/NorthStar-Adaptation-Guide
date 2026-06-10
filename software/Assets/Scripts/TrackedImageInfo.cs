@@ -25,6 +25,8 @@ public class TrackedImageInfo : MonoBehaviour
     public Dictionary<string, GameObject> spawnedHeads =
         new Dictionary<string, GameObject>();
 
+    private HashSet<string> lockedHidden = new HashSet<string>();
+
     void OnEnable() => m_TrackedImageManager.trackedImagesChanged += OnChanged;
     void OnDisable() => m_TrackedImageManager.trackedImagesChanged -= OnChanged;
 
@@ -89,6 +91,8 @@ public class TrackedImageInfo : MonoBehaviour
     {
         string name = updatedImage.referenceImage.name;
 
+        if (lockedHidden.Contains(name)) return;
+
         Vector3 updatedPosition = updatedImage.transform.position +
             new Vector3(0, 0.05f, 0);
         Vector3 directionToCamera = -(Camera.main.transform.position - updatedPosition);
@@ -152,6 +156,17 @@ public class TrackedImageInfo : MonoBehaviour
 
         arrowManager.UpdateMarkers(spawnedNodes, spawnedTails, spawnedHeads);
         taskManager.UpdateMarkers(spawnedNodes, spawnedTails, spawnedHeads);
+    }
+
+    public void LockHidden(string name)
+    {
+        lockedHidden.Add(name);
+        if (spawnedNodes.ContainsKey(name))
+            spawnedNodes[name].SetActive(false);
+        else if (spawnedTails.ContainsKey(name))
+            spawnedTails[name].SetActive(false);
+        else if (spawnedHeads.ContainsKey(name))
+            spawnedHeads[name].SetActive(false);
     }
 
     GameObject CreateDot(Vector3 position)
