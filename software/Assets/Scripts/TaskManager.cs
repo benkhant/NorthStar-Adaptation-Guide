@@ -89,7 +89,7 @@ public class TaskManager : MonoBehaviour
         if (tail10Correct && !countingDown)
         {
             currentState = TaskState.RemoveNode20;
-            instructionText.text = "Pointer updated!\nNode 20 is now unreachable\nRemove the node_20 card from the table";
+            instructionText.text = "Pointer updated!\nNode 20 is now unreachable\nRemove node_20, tail_20, and head_20 cards from the table";
             countingDown = true;
             deletionTimer = 0f;
             UpdateNodeColors();
