@@ -52,7 +52,7 @@ public class TaskManager : MonoBehaviour
         if (countingDown)
         {
             deletionTimer += Time.deltaTime;
-            if (deletionTimer >= 7f)
+            if (deletionTimer >= 10f)
             {
                 currentState = TaskState.DeletionComplete;
                 instructionText.text = "Deletion complete!\n10 -> 30\nNode 20 has been removed from memory";
