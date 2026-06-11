@@ -68,7 +68,7 @@ public class ArrowManager : MonoBehaviour
                 GameObject arrowHead =
                     GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 arrowHead.transform.localScale =
-                    new Vector3(0.005f, 0.01f, 0.005f);
+                    new Vector3(0.004f, 0.004f, 0.004f);
                 arrowHead.GetComponent<Renderer>().material =
                     new Material(Shader.Find("Universal Render Pipeline/Lit"));
                 arrowHead.GetComponent<Renderer>().material.color = Color.white;
