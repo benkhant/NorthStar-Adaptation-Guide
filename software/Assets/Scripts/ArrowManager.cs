@@ -37,6 +37,8 @@ public class ArrowManager : MonoBehaviour
         { "tail_20", "node_20" }
     };
 
+    public TaskManager.TaskState currentTaskState;
+
     // Called by TrackedImageInfo whenever any marker card changes
     // Updates the local card positions and creates arrow objects if needed
     public void UpdateMarkers(
@@ -172,20 +174,23 @@ public class ArrowManager : MonoBehaviour
         string headNumber = headName.Split('_')[1];
         if (tailNumber == headNumber) return false;
 
-        // All valid connections based on the linked list 10 -> 20 -> 30
-        // tail_10 has two valid targets because it points to head_20 before deletion
-        // and head_30 after deletion — both are correct at different stages
-        Dictionary<string, List<string>> validConnections =
-            new Dictionary<string, List<string>>
+        if (currentTaskState == TaskManager.TaskState.BuildingStartList ||
+            currentTaskState == TaskManager.TaskState.ShowingStartList)
         {
-            { "tail_10", new List<string> { "head_20", "head_30" } },
-            { "tail_20", new List<string> { "head_30" } }
+            // only correct before connections valid
+            Dictionary<string, string> correctBefore = new Dictionary<string, string>
+        {
+            { "tail_10", "head_20" },
+            { "tail_20", "head_30" }
         };
-
-        if (!validConnections.ContainsKey(tailName)) return false;
-        return validConnections[tailName].Contains(headName);
+            if (!correctBefore.ContainsKey(tailName)) return false;
+            return correctBefore[tailName] == headName;
+        }
+        else {
+                // after redirect — only tail_10 to head_30 is correct
+                return tailName == "tail_10" && headName == "head_30";
+        }
     }
-
     // Hides both the arrow shaft and arrowhead for a given tail card
     void HideArrow(string tailName)
     {

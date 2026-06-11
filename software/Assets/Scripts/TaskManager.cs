@@ -10,6 +10,7 @@ public class TaskManager : MonoBehaviour
 {
     [SerializeField] TextMeshPro instructionText;
     [SerializeField] TrackedImageInfo trackedImageInfo;
+    [SerializeField] ArrowManager arrowManager;
 
     private Dictionary<string, GameObject> spawnedNodes;
     private Dictionary<string, GameObject> spawnedTails;
@@ -48,6 +49,8 @@ public class TaskManager : MonoBehaviour
 
     void Update()
     {
+        arrowManager.currentTaskState = currentState;
+
         // timer runs after student is told to remove node_20 group
         if (countingDown)
         {
@@ -86,17 +89,16 @@ public class TaskManager : MonoBehaviour
 
         // Step 3 — pointer redirected, start countdown
         bool tail10Correct = IsTailCorrectlyConnected("tail_10", "head_30");
-        if (tail10Correct && !countingDown)
+        if (tail10Correct && !countingDown && currentState == TaskState.ShowingStartList)
         {
             currentState = TaskState.RemoveNode20;
             instructionText.text = "Pointer updated!\nNode 20 is now unreachable\nRemove node_20, tail_20, and head_20 cards from the table";
             countingDown = true;
             deletionTimer = 0f;
-            UpdateNodeColors();
 
             trackedImageInfo.LockHidden("tail_20");
-            trackedImageInfo.LockHidden("head_20");
-
+            trackedImageInfo.LockHidden("head_20"); 
+            UpdateNodeColors();
             return;
         }
 

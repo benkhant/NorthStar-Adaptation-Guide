@@ -895,6 +895,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   instructionText: {fileID: 890939009}
   trackedImageInfo: {fileID: 2114268440}
+  arrowManager: {fileID: 2071169580}
   currentState: 0
 --- !u!4 &1084873080
 Transform:
@@ -974,6 +975,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   arrowPrefab: {fileID: 5595870681877963922, guid: 125c4352066040d419cfff8d4faabc87, type: 3}
   taskManager: {fileID: 1084873079}
+  currentTaskState: 0
 --- !u!4 &2071169581
 Transform:
   m_ObjectHideFlags: 0
