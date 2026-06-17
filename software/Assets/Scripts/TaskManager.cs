@@ -2,23 +2,30 @@
 using UnityEngine;
 using TMPro;
 
-// This script manages the task instructions and tracks progress
-// through the linked list deletion activity.
-// Students remove node 20 from the list 10 -> 20 -> 30
-// by first updating the linkages then physically removing the node card.
+// This script runs the whole deletion activity./
+// It keeps track of what step the student is on, checks if cards
+// are connected correctly, and updates the instruction text.
+// The goal: students remove node 20 from the list 10 -> 20 -> 30.
 public class TaskManager : MonoBehaviour
 {
     [SerializeField] TextMeshPro instructionText;
     [SerializeField] TrackedImageInfo trackedImageInfo;
     [SerializeField] ArrowManager arrowManager;
 
+    // These get filled in every frame by the script that talks to
+    // ARCore. Each dictionary just maps a card name (like "tail_10")
+    // to the actual object Unity is showing for it.
     private Dictionary<string, GameObject> spawnedNodes;
     private Dictionary<string, GameObject> spawnedTails;
     private Dictionary<string, GameObject> spawnedHeads;
 
+    // Once the pointer is redirected correctly, we count down 10
+    // seconds before calling the deletion "done".
     private float deletionTimer = 0f;
     private bool countingDown = false;
 
+    // How close a tail and head need to be (in Unity units) to count
+    // as "connected". Found this number by testing on the tablet.
     private float connectionThreshold = 0.15f;
 
     public enum TaskState
@@ -32,7 +39,7 @@ public class TaskManager : MonoBehaviour
 
     public TaskState currentState = TaskState.PlacingNodes;
 
-    // Correct starting connections: 10 -> 20 -> 30
+    // What the list should look like before deletion: 10 -> 20 -> 30
     private Dictionary<string, string> correctBefore =
         new Dictionary<string, string>
     {
@@ -40,18 +47,30 @@ public class TaskManager : MonoBehaviour
         { "tail_20", "head_30" }
     };
 
-    // Correct connections after updating linkages: 10 -> 30
+    // What the list should look like after deletion: 10 -> 30
+    // (this is what happens in code when you reassign the next pointer)
     private Dictionary<string, string> correctAfter =
         new Dictionary<string, string>
     {
         { "tail_10", "head_30" }
     };
 
+    // This runs every single frame and is basically the brain of the
+    // activity. Each block below checks one thing, and if it's true,
+    // moves to the next step. Order matters — once one block runs and
+    // returns, nothing below it runs that frame.
     void Update()
     {
+        // Let the arrow script know what step we're on, so it can
+        // decide which connections should look green or red.
         arrowManager.currentTaskState = currentState;
 
-        // timer runs after student is told to remove node_20 group
+        // We're counting down to "deletion complete". This starts
+        // once the student redirects the pointer correctly. We use a
+        // plain timer instead of checking if the node_20 card is
+        // gone, because ARCore doesn't reliably tell us when a card
+        // has actually been removed — it tends to leave a "ghost"
+        // behind.
         if (countingDown)
         {
             deletionTimer += Time.deltaTime;
@@ -61,14 +80,18 @@ public class TaskManager : MonoBehaviour
                 instructionText.text = "Deletion complete!\n10 -> 30\nNode 20 has been removed from memory";
                 countingDown = false;
 
-                // hide node_20 group immediately on completion
+                // Hide node_20 so it doesn't keep showing up
+                // at its last known spot.
                 trackedImageInfo.LockHidden("node_20");
             }
             return;
         }
 
+        // Once we're done, stay done. Without this, the checks below
+        // could accidentally send us back to an earlier step.
         if (currentState == TaskState.DeletionComplete) return;
 
+        // No cards detected at all yet.
         if (spawnedNodes == null || spawnedNodes.Count == 0)
         {
             currentState = TaskState.PlacingNodes;
@@ -78,6 +101,7 @@ public class TaskManager : MonoBehaviour
 
         int visibleNodes = CountVisible(spawnedNodes);
 
+        // Not all 3 node cards are on the table yet — keep waiting.
         if (visibleNodes < 3)
         {
             currentState = TaskState.PlacingNodes;
@@ -87,7 +111,11 @@ public class TaskManager : MonoBehaviour
             return;
         }
 
-        // Step 3 — pointer redirected, start countdown
+        // This is the actual "delete the node" moment — the student
+        // moved tail_10 onto head_30, skipping node_20 entirely. We
+        // only let this fire once (countingDown guard) and only after
+        // the starting list was already confirmed, so it can't
+        // accidentally trigger early.
         bool tail10Correct = IsTailCorrectlyConnected("tail_10", "head_30");
         if (tail10Correct && !countingDown && currentState == TaskState.ShowingStartList)
         {
@@ -96,13 +124,20 @@ public class TaskManager : MonoBehaviour
             countingDown = true;
             deletionTimer = 0f;
 
+            // tail_20 and head_20 don't mean anything anymore once
+            // the list has been redirected, so we hide them right
+            // away to keep things visually clean. Only node_20
+            // actually needs to be physically removed for the timer
+            // above to count as "done" though.
             trackedImageInfo.LockHidden("tail_20");
-            trackedImageInfo.LockHidden("head_20"); 
+            trackedImageInfo.LockHidden("head_20");
             UpdateNodeColors();
             return;
         }
 
-        // Step 2 — starting list built
+        // Both starting connections are made — let the student know
+        // the list is built correctly before asking them to delete
+        // anything.
         if (IsLinkageCorrect(correctBefore))
         {
             currentState = TaskState.ShowingStartList;
@@ -111,7 +146,9 @@ public class TaskManager : MonoBehaviour
             return;
         }
 
-        // Step 1b — one connection done
+        // Only one of the two connections is made so far — tell the
+        // student exactly which one is still missing instead of
+        // repeating the full instructions.
         bool tail10Connected = IsTailCorrectlyConnected("tail_10", "head_20");
         bool tail20Connected = IsTailCorrectlyConnected("tail_20", "head_30");
 
@@ -131,12 +168,16 @@ public class TaskManager : MonoBehaviour
             return;
         }
 
-        // Step 1a — nothing connected yet
+        // All 3 nodes are down but neither connection has been made
+        // yet — this is the default starting instruction.
         currentState = TaskState.BuildingStartList;
         instructionText.text = "All nodes placed!\nConnect tail_10 to head_20\nand tail_20 to head_30";
         UpdateNodeColors();
     }
 
+    // Keeps the instruction text floating in front of the camera and
+    // facing the student, like a heads-up display, instead of being
+    // stuck to one card.
     void LateUpdate()
     {
         if (Camera.main != null)
@@ -155,6 +196,8 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Called every frame by the ARCore tracking script to pass along
+    // whatever cards it can currently see.
     public void UpdateMarkers(
         Dictionary<string, GameObject> nodes,
         Dictionary<string, GameObject> tails,
@@ -165,6 +208,8 @@ public class TaskManager : MonoBehaviour
         spawnedHeads = heads;
     }
 
+    // Simple helper — counts how many cards in a dictionary are
+    // currently visible to the camera.
     int CountVisible(Dictionary<string, GameObject> dict)
     {
         int count = 0;
@@ -175,7 +220,9 @@ public class TaskManager : MonoBehaviour
         return count;
     }
 
-    // Checks if a specific tail is connected to a specific head
+    // Checks if one specific tail card is close enough to one
+    // specific head card to count as connected. Used when we just
+    // need to check a single pair, like "is tail_10 on head_30 yet?"
     bool IsTailCorrectlyConnected(string tailName, string headName)
     {
         if (spawnedTails == null || spawnedHeads == null) return false;
@@ -191,6 +238,9 @@ public class TaskManager : MonoBehaviour
         return distance <= connectionThreshold;
     }
 
+    // Checks if every tail-to-head pair in a given list is connected
+    // correctly. Used when we want to check a whole structure at
+    // once, like "is the full starting list built?"
     bool IsLinkageCorrect(Dictionary<string, string> expectedLinkage)
     {
         if (spawnedTails == null || spawnedHeads == null) return false;
@@ -215,6 +265,11 @@ public class TaskManager : MonoBehaviour
         return true;
     }
 
+    // Updates the color of each node so students get visual feedback
+    // on whether things are connected right. node_30 is a special
+    // case since it has no outgoing pointer of its own — it just
+    // turns "correct" once the list has reached ShowingStartList or
+    // later.
     void UpdateNodeColors()
     {
         if (spawnedNodes == null) return;
@@ -250,6 +305,11 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Checks if a node's outgoing tail is connected the "right" way
+    // for whatever step we're currently on. Before deletion, "right"
+    // means matching the original list (correctBefore). After the
+    // pointer redirect, "right" means matching the updated list
+    // (correctAfter) instead.
     bool IsNodeCorrectlyLinked(string tailName)
     {
         if (spawnedTails == null || spawnedHeads == null) return false;
@@ -277,6 +337,8 @@ public class TaskManager : MonoBehaviour
         return distance <= connectionThreshold;
     }
 
+    // Lets other scripts (like ArrowManager) grab these linkages
+    // directly instead of copying the same dictionaries again.
     public Dictionary<string, string> GetCorrectBefore() => correctBefore;
     public Dictionary<string, string> GetCorrectAfter() => correctAfter;
 }

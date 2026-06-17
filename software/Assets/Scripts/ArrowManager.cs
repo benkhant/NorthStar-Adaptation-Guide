@@ -28,8 +28,11 @@ public class ArrowManager : MonoBehaviour
     // 0.15f = 15cm — close enough to be intentional but not accidental
     private float connectionThreshold = 0.15f;
 
-    // Maps each tail card to the node it belongs to
-    // Used to start the arrow from the node box rather than the tail dot
+    // Just keeps the list of which tail cards exist and which node
+    // they belong to. We loop over this to know which tails need an
+    // arrow created for them — the node mapping itself isn't used
+    // for positioning anymore (the arrow starts from the tail dot
+    // directly, not the node box).
     private Dictionary<string, string> tailToNode =
         new Dictionary<string, string>
     {
@@ -52,21 +55,26 @@ public class ArrowManager : MonoBehaviour
         InitializeArrows();
     }
 
-    // Creates one arrow shaft and one arrowhead for each tail card
-    // Only creates them once — skips if they already exist
+    // Creates one arrow shaft and one arrowhead for each tail card.
+    // Only runs once per tail — if the arrow already exists, this
+    // just skips it, so it's safe to call this every time markers
+    // update without creating duplicates.
     void InitializeArrows()
     {
         foreach (var tail in tailToNode.Keys)
         {
             if (!arrows.ContainsKey(tail))
             {
-                // Create the arrow shaft from the prefab and hide it until needed
+                // Create the arrow shaft from the prefab and hide it
+                // until there's actually something to point at.
                 GameObject arrow = Instantiate(arrowPrefab);
                 arrow.SetActive(false);
                 arrows[tail] = arrow;
 
-                // Create the arrowhead as a small cylinder
-                // A true cone shape is not available in Unity primitives
+                // Create the arrowhead as a small cylinder. Unity's
+                // built-in primitives don't include a real cone, so
+                // a thin cylinder is used to approximate the look of
+                // an arrowhead instead.
                 GameObject arrowHead =
                     GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 arrowHead.transform.localScale =
@@ -74,15 +82,16 @@ public class ArrowManager : MonoBehaviour
                 arrowHead.GetComponent<Renderer>().material =
                     new Material(Shader.Find("Universal Render Pipeline/Lit"));
                 arrowHead.GetComponent<Renderer>().material.color = Color.white;
-                Destroy(arrowHead.GetComponent<Collider>()); // purely visual
+                Destroy(arrowHead.GetComponent<Collider>()); // purely visual, no physics needed
                 arrowHead.SetActive(false);
                 arrowHeads[tail] = arrowHead;
             }
         }
     }
 
-    // Runs every frame — checks each tail card and decides whether to
-    // show, update, or hide its arrow based on nearby head cards
+    // Runs every frame. For each tail card, checks if there's a head
+    // card close enough to count as "connected", and shows, updates,
+    // or hides that tail's arrow accordingly.
     void Update()
     {
         if (spawnedTails == null || spawnedHeads == null) return;
@@ -91,7 +100,8 @@ public class ArrowManager : MonoBehaviour
         {
             string tailName = tailEntry.Key;
 
-            // If the tail card is not visible hide its arrow and move on
+            // If the tail card itself isn't visible right now, there's
+            // nothing to draw an arrow from — hide it and move on.
             bool tailVisible = spawnedTails.ContainsKey(tailName) &&
                                spawnedTails[tailName].activeSelf;
             if (!tailVisible)
@@ -109,6 +119,9 @@ public class ArrowManager : MonoBehaviour
             {
                 Vector3 headPosition = spawnedHeads[nearestHead].transform.position;
 
+                // Arrow starts right at the tail card's dot, not the
+                // node box, since the tail dot is what the student is
+                // actually moving around.
                 Vector3 startPosition = tailPosition;
 
                 // Check if this connection follows the correct linked list order
@@ -133,9 +146,10 @@ public class ArrowManager : MonoBehaviour
         }
     }
 
-    // Finds the closest head card to a given tail card position
-    // Skips head cards that belong to the same node as the tail
-    // Returns null if nothing is within the connection threshold
+    // Finds the closest head card to a given tail card position.
+    // Skips any head card that belongs to the same node number as the
+    // tail, since a node can't point to itself. Returns null if
+    // nothing is within the connection threshold.
     string FindNearestHead(Vector3 tailPosition, string tailName)
     {
         string nearestHead = null;
@@ -165,8 +179,13 @@ public class ArrowManager : MonoBehaviour
         return nearestHead;
     }
 
-    // Returns true if a tail to head connection follows the correct linked list order
-    // tail_15 can correctly connect to head_20 or head_30 since both are valid states
+    // Decides if a tail-to-head connection is the "correct" one,
+    // but what counts as correct depends on what stage of the
+    // activity we're in. While the student is still building the
+    // starting list, only the original 10->20 and 20->30 connections
+    // should show green. Once the pointer has been redirected, only
+    // 10->30 should show green — everything else, including the old
+    // 10->20 connection, should now read as incorrect.
     bool IsCorrectConnection(string tailName, string headName)
     {
         // A node can never point to its own incoming connection
@@ -177,7 +196,8 @@ public class ArrowManager : MonoBehaviour
         if (currentTaskState == TaskManager.TaskState.BuildingStartList ||
             currentTaskState == TaskManager.TaskState.ShowingStartList)
         {
-            // only correct before connections valid
+            // Still building or confirming the starting list —
+            // only the original connections count as correct.
             Dictionary<string, string> correctBefore = new Dictionary<string, string>
         {
             { "tail_10", "head_20" },
@@ -186,9 +206,11 @@ public class ArrowManager : MonoBehaviour
             if (!correctBefore.ContainsKey(tailName)) return false;
             return correctBefore[tailName] == headName;
         }
-        else {
-                // after redirect — only tail_10 to head_30 is correct
-                return tailName == "tail_10" && headName == "head_30";
+        else
+        {
+            // Past the redirect step — the only correct connection
+            // left is the updated pointer, tail_10 to head_30.
+            return tailName == "tail_10" && headName == "head_30";
         }
     }
     // Hides both the arrow shaft and arrowhead for a given tail card
@@ -200,16 +222,17 @@ public class ArrowManager : MonoBehaviour
             arrowHeads[tailName].SetActive(false);
     }
 
-    // Positions, stretches, rotates and colors the arrow between two points
-    // The arrow starts at the edge of the from node and ends at the edge of the to node
+    // Positions, stretches, rotates and colors the arrow between two
+    // points. The arrow shaft fills the space between the two cards,
+    // and the arrowhead sits right at the destination end.
     void UpdateArrow(GameObject arrow, GameObject arrowHead,
         Vector3 from, Vector3 to, bool isCorrect)
     {
         float nodeHalfWidth = 0.025f;
         Vector3 direction = (to - from).normalized;
 
-        // Offset start and end points to the edges of the nodes
-        // so the arrow does not overlap with the node boxes themselves
+        // Pull the start and end points in slightly so the arrow
+        // doesn't visually overlap with the cards at either end.
         Vector3 startPoint = from + direction * nodeHalfWidth;
         Vector3 endPoint = to - direction * nodeHalfWidth;
 
