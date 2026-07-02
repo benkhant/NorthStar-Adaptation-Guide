@@ -104,3 +104,25 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Unity 6 migration leftover files
+software/Assets/DefaultVolumeProfile.asset
+software/Assets/DefaultVolumeProfile.asset.meta
+software/Assets/Resources.meta
+software/Assets/Scripts/MainScripts.asmdef
+software/Assets/Scripts/MainScripts.asmdef.meta
+software/Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl
+software/Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl.meta
+software/Assets/TextMesh Pro/Shaders/TMP_SDF-HDRP*
+software/Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile-2-Pass*
+software/Assets/TextMesh Pro/Shaders/TMP_SDF-URP*
+software/ProjectSettings/MultiplayerManager.asset
+
+# Unity 6 new project ignores
+LinkedListAR_Unity6/Library/
+LinkedListAR_Unity6/Temp/
+LinkedListAR_Unity6/Logs/
+LinkedListAR_Unity6/obj/
+LinkedListAR_Unity6/Build/
+LinkedListAR_Unity6/Builds/
+LinkedListAR_Unity6/UserSettings/
