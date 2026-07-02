@@ -24,6 +24,8 @@ Commercial optical see-through AR headsets remain costly, proprietary, and diffi
 - Publish a transparent bill of materials with cost breakdown  
 - Enable reproducibility for educators and researchers  
 - Establish a hardware foundation for interactive AR learning software
+- Develop interactive AR learning activities for computer science education
+- Evaluate the effectiveness of AR spatial visualization for teaching linked list operations
 
 ---
 
@@ -48,7 +50,7 @@ Includes:
 
 Calibration documentation is available here:
 
- [Optics Calibration Guide](docs/optics-calibration.md)
+[Optics Calibration Guide](docs/optics-calibration.md)
 
 Includes:
 - Checkerboard-based alignment procedure
@@ -89,47 +91,61 @@ A detailed bill of materials and cost breakdown spreadsheet will be published in
 - ✅ Hardware prototype constructed
 - ✅ Optics calibration workflow established  
 - 🚧 Mechanical documentation in progress  
-- 🚧 Interactive AR educational software in development  
+- ✅ AR linked list deletion activity complete (Unity 2022)
+- ✅ AR linked list deletion activity ported to Unity 6
 - 🚧 Classroom pilot evaluation planned  
 
 ---
 
-## Software: AR Linked List Activity
+## Software: AR Linked List Deletion Activity
 
 An interactive AR learning activity has been developed for visualizing 
 linked list pointer operations using image tracking on an Android tablet.
 
-The activity is located in the [`software/`](software/) folder.
+Two versions of the activity are available in this repository:
+
+| Version | Folder | Unity Version | Status |
+|---------|--------|---------------|--------|
+| Stable (v1.0) | [`software/`](software/) | Unity 2022.3 LTS | ✅ Fully working, tagged `v1.0-deletion-activity` |
+| Unity 6 Rebuild (v2.0) | [`LinkedListAR_Unity6/`](LinkedListAR_Unity6/) | Unity 6 (6000.0.73f1 LTS) | ✅ Fully working, tagged `v2.0-unity6-rebuild` |
 
 ### How It Works
-Students physically manipulate printed marker cards on a table. 
+Students physically manipulate printed marker cards on a table.
 The tablet camera detects the cards and augments the scene with:
 - Blue numbered nodes floating above each node card
 - Orange dots above tail cards (outgoing pointers)
 - Purple dots above head cards (incoming connections)
 - Green arrows for correct pointer connections
 - Red arrows for incorrect connections
-- Live task instructions guiding students through insertion
+- Live task instructions guiding students through the deletion task
 
 ### Activity Flow
-1. Place all node cards on the table
-2. Connect tail and head cards to build the starting list: 10 → 15 → 30 → 45
-3. Insert node 20 by moving tail_15 to head_20 and tail_20 to head_30
-4. Complete the insertion: 10 → 15 → 20 → 30 → 45
+1. Place all three node cards (10, 20, 30) on the table
+2. Connect tail and head cards to build the starting list: 10 → 20 → 30
+3. Delete node 20 by moving tail_10 to head_30, redirecting the pointer
+4. The list updates to: 10 → 30
 
 ### Requirements
-- Unity 2022.3 LTS
+- Unity 2022.3 LTS (for `software/`) or Unity 6 6000.0.73f1 LTS (for `LinkedListAR_Unity6/`)
 - AR Foundation
-- Android tablet with ARCore support
-- 13 printed marker cards (see `software/Assets/Markers/`)
+- Google ARCore XR Plugin
+- Android tablet with ARCore support (tested on Samsung SM-X210)
+- 7 printed marker cards (see `software/Assets/Markers/` or `LinkedListAR_Unity6/Assets/Markers/`)
+
+### Unity 6 Migration Notes
+The Unity 6 rebuild was created from scratch using Unity's AR Mobile template rather than migrating the Unity 2022 project directly. Key changes include:
+
+- **ARCore added event fallback:** ARCore sometimes skips the `added` event for previously seen markers and fires `updated` directly. A fallback was added inside `UpdateMarker` to spawn objects on the spot if they don't exist yet, ensuring reliable detection across repeated app launches.
+- **AR Mobile template:** Using the AR Mobile template instead of a generic Unity 6 project ensures correct renderer, AR Camera Background, OpenGLES3, and Tracked Pose Driver bindings are configured from the start.
+- **API migration:** Updated from the deprecated `trackedImagesChanged` event to the new `trackablesChanged` UnityEvent introduced in AR Foundation 6.0.
 
 ### Current Status
-- ✅ Image tracking with 13 marker cards
+- ✅ Image tracking with 7 marker cards
 - ✅ Dynamic arrow drawing with color feedback
 - ✅ Task instruction system
-- ✅ Node insertion activity
-- 🚧 Pilot evaluation planned
-- 🚧 Port to North Star HMD in progress
+- ✅ Node deletion activity fully working on Unity 2022 and Unity 6
+- 🚧 Esky HMD integration in progress
+- 🚧 Classroom pilot evaluation planned
 
 ---
 
