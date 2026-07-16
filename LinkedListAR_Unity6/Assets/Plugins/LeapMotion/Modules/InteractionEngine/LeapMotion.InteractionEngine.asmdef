@@ -1,0 +1,16 @@
+{
+    "name": "LeapMotion.InteractionEngine",
+    "rootNamespace": "",
+    "references": [
+        "LeapMotion.asmdef"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

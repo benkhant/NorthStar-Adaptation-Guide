@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.microsoft.mixedreality.webrtc": "file:C:/AR Research/ProjectEsky/com.microsoft.mixedreality.webrtc-2.0.2/package",
     "com.unity.feature.development": "1.0.2",
     "com.unity.inputsystem": "1.19.0",
     "com.unity.learn.iet-framework": "4.0.4",

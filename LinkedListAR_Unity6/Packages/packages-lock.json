@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.microsoft.mixedreality.webrtc": {
+      "version": "file:C:/AR Research/ProjectEsky/com.microsoft.mixedreality.webrtc-2.0.2/package",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.unity.burst": {
       "version": "1.8.29",
       "depth": 2,
