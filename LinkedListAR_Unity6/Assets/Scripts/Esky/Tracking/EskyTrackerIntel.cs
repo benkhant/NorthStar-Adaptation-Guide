@@ -378,24 +378,39 @@ namespace BEERLabs.ProjectEsky.Tracking{
                     kalmanFilters.RotationAccelerationFilterParams.Enabled
                     );
         }
-        public override void ObtainPose(){
-            if(ApplyPoses){
-                switch(trackingSystemFilters.trackingSystemUsed){
+        public override void ObtainPose()
+        {
+            if (ApplyPoses)
+            {
+                switch (trackingSystemFilters.trackingSystemUsed)
+                {
                     case TrackingSystemUsed.NEW:
-                        IntPtr ptr = GetLatestTimestampPose(TrackerID);                 
+                        IntPtr ptr = GetLatestTimestampPose(TrackerID);
                         Marshal.Copy(ptr, currentRealsensePoseExt, 0, 7);
-                        transform.position =  new Vector3((float)currentRealsensePoseExt[0],(float)currentRealsensePoseExt[1],-(float)currentRealsensePoseExt[2]);
-                        transform.rotation = new Quaternion(-(float)currentRealsensePoseExt[3],-(float)currentRealsensePoseExt[4],(float)currentRealsensePoseExt[5],(float)currentRealsensePoseExt[6]);                     
+                        Vector3 newPosNew = new Vector3((float)currentRealsensePoseExt[0], (float)currentRealsensePoseExt[1], -(float)currentRealsensePoseExt[2]);
+                        Quaternion newRotNew = new Quaternion(-(float)currentRealsensePoseExt[3], -(float)currentRealsensePoseExt[4], (float)currentRealsensePoseExt[5], (float)currentRealsensePoseExt[6]);
+                        if (!float.IsNaN(newPosNew.x) && !float.IsNaN(newPosNew.y) && !float.IsNaN(newPosNew.z) &&
+                           !float.IsNaN(newRotNew.x) && !float.IsNaN(newRotNew.y) && !float.IsNaN(newRotNew.z) && !float.IsNaN(newRotNew.w))
+                        {
+                            transform.position = newPosNew;
+                            transform.rotation = newRotNew;
+                        }
                         break;
                     case TrackingSystemUsed.OLD:
-                        IntPtr ptr2 = GetLatestPose(TrackerID);                 
+                        IntPtr ptr2 = GetLatestPose(TrackerID);
                         Marshal.Copy(ptr2, currentRealsensePose, 0, 7);
-                        transform.position =  new Vector3(currentRealsensePose[0],currentRealsensePose[1],currentRealsensePose[2]);
-                        transform.rotation = new Quaternion(currentRealsensePose[3],currentRealsensePose[4],currentRealsensePose[5],currentRealsensePose[6]); 
+                        Vector3 newPosOld = new Vector3(currentRealsensePose[0], currentRealsensePose[1], currentRealsensePose[2]);
+                        Quaternion newRotOld = new Quaternion(currentRealsensePose[3], currentRealsensePose[4], currentRealsensePose[5], currentRealsensePose[6]);
+                        if (!float.IsNaN(newPosOld.x) && !float.IsNaN(newPosOld.y) && !float.IsNaN(newPosOld.z) &&
+                           !float.IsNaN(newRotOld.x) && !float.IsNaN(newRotOld.y) && !float.IsNaN(newRotOld.z) && !float.IsNaN(newRotOld.w))
+                        {
+                            transform.position = newPosOld;
+                            transform.rotation = newRotOld;
+                        }
                         break;
                 }
             }
-        } 
+        }
         public override void SaveEskyMapInformation(){
             ObtainMap(TrackerID);
         }

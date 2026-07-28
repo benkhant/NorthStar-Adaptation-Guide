@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System;
@@ -87,16 +87,16 @@ namespace Leap.Unity.AR.Testing {
         biggestRightBlobIndex = -1;
         biggestLeftBlobIndex = -1;
         subtractionImage = new Mat[2];
-        subtractionImage[0] = new Mat(imageHeight, imageWidth, MatType.CV_8UC1, 0);
-        subtractionImage[1] = new Mat(imageHeight, imageWidth, MatType.CV_8UC1, 0);
+        subtractionImage[0] = new Mat(imageHeight, imageWidth, MatType.CV_8UC1, new Scalar(0));
+        subtractionImage[1] = new Mat(imageHeight, imageWidth, MatType.CV_8UC1, new Scalar(0));
         maskImage = new Mat[2];
-        maskImage[0] = new Mat(imageHeight, imageWidth, MatType.CV_8UC1, 255);
-        maskImage[1] = new Mat(imageHeight, imageWidth, MatType.CV_8UC1, 255);
+        maskImage[0] = new Mat(imageHeight, imageWidth, MatType.CV_8UC1, new Scalar(255));
+        maskImage[1] = new Mat(imageHeight, imageWidth, MatType.CV_8UC1, new Scalar(255));
         undistortMaps = new Mat[4];
-        undistortMaps[0] = new Mat(imageHeight, imageWidth, MatType.CV_32FC1, 0);
-        undistortMaps[1] = new Mat(imageHeight, imageWidth, MatType.CV_32FC1, 0);
-        undistortMaps[2] = new Mat(imageHeight, imageWidth, MatType.CV_32FC1, 0);
-        undistortMaps[3] = new Mat(imageHeight, imageWidth, MatType.CV_32FC1, 0);
+        undistortMaps[0] = new Mat(imageHeight, imageWidth, MatType.CV_32FC1, new Scalar(0));
+        undistortMaps[1] = new Mat(imageHeight, imageWidth, MatType.CV_32FC1, new Scalar(0));
+        undistortMaps[2] = new Mat(imageHeight, imageWidth, MatType.CV_32FC1, new Scalar(0));
+        undistortMaps[3] = new Mat(imageHeight, imageWidth, MatType.CV_32FC1, new Scalar(0));
         undistortMapsInitialized = false;
       }
 
@@ -105,12 +105,12 @@ namespace Leap.Unity.AR.Testing {
         int height = subtractionImage[0].Height;
         subtractionImage[0].Release();
         subtractionImage[1].Release();
-        subtractionImage[0] = new Mat(height, width, MatType.CV_8UC1, 0);
-        subtractionImage[1] = new Mat(height, width, MatType.CV_8UC1, 0);
+        subtractionImage[0] = new Mat(height, width, MatType.CV_8UC1, new Scalar(0));
+        subtractionImage[1] = new Mat(height, width, MatType.CV_8UC1, new Scalar(0));
         maskImage[0].Release();
         maskImage[1].Release();
-        maskImage[0] = new Mat(height, width, MatType.CV_8UC1, 255);
-        maskImage[1] = new Mat(height, width, MatType.CV_8UC1, 255);
+        maskImage[0] = new Mat(height, width, MatType.CV_8UC1, new Scalar(255));
+        maskImage[1] = new Mat(height, width, MatType.CV_8UC1, new Scalar(255));
       }
 
       public void resetSubtraction() {
@@ -118,8 +118,8 @@ namespace Leap.Unity.AR.Testing {
         int height = subtractionImage[0].Height;
         subtractionImage[0].Release();
         subtractionImage[1].Release();
-        subtractionImage[0] = new Mat(height, width, MatType.CV_8UC1, 0);
-        subtractionImage[1] = new Mat(height, width, MatType.CV_8UC1, 0);
+        subtractionImage[0] = new Mat(height, width, MatType.CV_8UC1, new Scalar(0));
+        subtractionImage[1] = new Mat(height, width, MatType.CV_8UC1, new Scalar(0));
       }
 
       public void calculateUndistortMaps(DeviceCalibrations.DeviceCalibration calibration) {
@@ -231,10 +231,10 @@ namespace Leap.Unity.AR.Testing {
 
         Mat workingImage = new Mat(calibrationDevices[j].webcam.leftImage.Height,
                                    calibrationDevices[j].webcam.leftImage.Width,
-                                   calibrationDevices[j].webcam.leftImage.Type(), 0);
+                                   calibrationDevices[j].webcam.leftImage.Type(), new Scalar(0));
         Mat workingImage2 = new Mat(calibrationDevices[j].webcam.leftImage.Height,
                                     calibrationDevices[j].webcam.leftImage.Width,
-                                    calibrationDevices[j].webcam.leftImage.Type(), 0);
+                                    calibrationDevices[j].webcam.leftImage.Type(), new Scalar(0));
         for (int i = 0; i < 2; i++) {
           workingImage2.SetTo(0);
           Mat curMat = i == 0 ? calibrationDevices[j].webcam.leftImage :
@@ -520,7 +520,7 @@ namespace Leap.Unity.AR.Testing {
           if (calibrationDevices[j].isConnected) {
             Mat workingImage = new Mat(calibrationDevices[j].subtractionImage[i].Height,
                                        calibrationDevices[j].subtractionImage[i].Width,
-                                       calibrationDevices[j].subtractionImage[i].Type(), 0);
+                                       calibrationDevices[j].subtractionImage[i].Type(), new Scalar(0));
             Cv2.Subtract(i == 0 ? calibrationDevices[j].webcam.leftImage :
                                   calibrationDevices[j].webcam.rightImage,
                          calibrationDevices[j].subtractionImage[i],
@@ -532,7 +532,7 @@ namespace Leap.Unity.AR.Testing {
             } else {
               Mat tempMask = new Mat(calibrationDevices[j].subtractionImage[i].Height,
                                      calibrationDevices[j].subtractionImage[i].Width,
-                                     calibrationDevices[j].subtractionImage[i].Type(), 0);
+                                     calibrationDevices[j].subtractionImage[i].Type(), new Scalar(0));
               Cv2.Threshold(workingImage, tempMask, maskThreshold, 255, ThresholdTypes.Binary);
               Cv2.BitwiseAnd(tempMask, calibrationDevices[j].maskImage[i], calibrationDevices[j].maskImage[i]);
               tempMask.Release();
@@ -553,7 +553,7 @@ namespace Leap.Unity.AR.Testing {
       Ray[] rays = new Ray[2];
       Mat workingImage = new Mat(calibrationDevices[j].webcam.leftImage.Height,
                                  calibrationDevices[j].webcam.leftImage.Width,
-                                 calibrationDevices[j].webcam.leftImage.Type(), 0);
+                                 calibrationDevices[j].webcam.leftImage.Type(), new Scalar(0));
       for (int i = 0; i < 2; i++) {
         Mat curMat = i == 0 ? calibrationDevices[j].webcam.leftImage :
                               calibrationDevices[j].webcam.rightImage;
@@ -574,7 +574,7 @@ namespace Leap.Unity.AR.Testing {
           settings.FilterByCircularity = false;
           SimpleBlobDetector detector = SimpleBlobDetector.Create();
           KeyPoint[] blobs = detector.Detect(workingImage, calibrationDevices[j].maskImage[i]);
-          Cv2.DrawKeypoints(workingImage, blobs, workingImage, 255);
+          Cv2.DrawKeypoints(workingImage, blobs, workingImage, new Scalar(255));
           int biggest = -1; float size = 0;
           for(int k = 0; k < blobs.Length; k++) {
             if(blobs[k].Size > size) {
@@ -586,13 +586,13 @@ namespace Leap.Unity.AR.Testing {
           // If there's only one blob in this image, assume it's the white circle
           if (blobs.Length > 0) {
             float[] pointArr = { blobs[biggest].Pt.X, blobs[biggest].Pt.Y };
-            Mat point = new Mat(1, 1, MatType.CV_32FC2, pointArr);
-            Mat undistortedPoint = new Mat(1, 1, MatType.CV_32FC2, 0);
+            Mat point = new Mat(1, 1, MatType.CV_32FC2); point.SetArray(pointArr);
+            Mat undistortedPoint = new Mat(1, 1, MatType.CV_32FC2, new Scalar(0));
             Cv2.UndistortPoints(point, undistortedPoint, calibrationDevices[j].calibration.cameras[i].cameraMatrixMat,
                                                          calibrationDevices[j].calibration.cameras[i].distCoeffsMat,
                                                          calibrationDevices[j].calibration.cameras[i].rectificationMatrixMat);
             Point2f[] rectilinear = new Point2f[1];
-            undistortedPoint.GetArray(0, 0, rectilinear);
+            undistortedPoint.GetArray(out rectilinear);
             Transform camera = i == 0 ? calibrationDevices[j].LeftCamera : calibrationDevices[j].RightCamera;
             rays[i] = new Ray(camera.position, camera.TransformDirection(
                              new Vector3(-rectilinear[0].X, rectilinear[0].Y, 1f)));
@@ -636,13 +636,13 @@ namespace Leap.Unity.AR.Testing {
 
       Mat workingImage = new Mat(calibrationDevices[j].webcam.leftImage.Height,
                                  calibrationDevices[j].webcam.leftImage.Width,
-                                 calibrationDevices[j].webcam.leftImage.Type(), 0);
+                                 calibrationDevices[j].webcam.leftImage.Type(), new Scalar(0));
       Mat workingImage2 = new Mat(calibrationDevices[j].webcam.leftImage.Height,
                                   calibrationDevices[j].webcam.leftImage.Width,
-                                  MatType.CV_64FC1, 0);
+                                  MatType.CV_64FC1, new Scalar(0));
       Mat workingImage3 = new Mat(calibrationDevices[j].webcam.leftImage.Height,
                                   calibrationDevices[j].webcam.leftImage.Width,
-                                  MatType.CV_64FC1, 0);
+                                  MatType.CV_64FC1, new Scalar(0));
       for (int i = 0; i < 2; i++) {
         workingImage.SetTo(0);
         workingImage2.SetTo(0);
@@ -728,10 +728,10 @@ namespace Leap.Unity.AR.Testing {
                      rectificationMatrixMat, newCameraMatrixMat;
 
           public CameraCalibration processToMat() {
-            distCoeffsMat =          new Mat(8, 1, MatType.CV_32FC1, distCoeffs.ToArray());
-            cameraMatrixMat =        new Mat(3, 3, MatType.CV_32FC1, cameraMatrix.ToArray());
-            rectificationMatrixMat = new Mat(3, 3, MatType.CV_32FC1, rectificationMatrix.ToArray());
-            newCameraMatrixMat =     new Mat(3, 4, MatType.CV_32FC1, newCameraMatrix.ToArray());
+            distCoeffsMat = new Mat(8, 1, MatType.CV_32FC1); distCoeffsMat.SetArray(distCoeffs.ToArray());
+            cameraMatrixMat = new Mat(3, 3, MatType.CV_32FC1); cameraMatrixMat.SetArray(cameraMatrix.ToArray());
+            rectificationMatrixMat = new Mat(3, 3, MatType.CV_32FC1); rectificationMatrixMat.SetArray(rectificationMatrix.ToArray());
+            newCameraMatrixMat = new Mat(3, 4, MatType.CV_32FC1); newCameraMatrixMat.SetArray(newCameraMatrix.ToArray());
             return this;
           }
 
