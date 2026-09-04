@@ -716,7 +716,20 @@ MonoBehaviour:
   - markerId: 2
     cardName: node_30
     prefab: {fileID: 8830316924320969480, guid: 0628af7ee66ef53459d2fb383de1e31b, type: 3}
+  - markerId: 3
+    cardName: tail_10
+    prefab: {fileID: 0}
+  - markerId: 4
+    cardName: tail_20
+    prefab: {fileID: 0}
+  - markerId: 5
+    cardName: head_20
+    prefab: {fileID: 0}
+  - markerId: 6
+    cardName: head_30
+    prefab: {fileID: 0}
   taskManager: {fileID: 1276661436}
+  arrowManager: {fileID: 1309315820}
   cameraPreviewImage: {fileID: 1886403928}
   markerSize: 0.05
   gridSize: 0.045

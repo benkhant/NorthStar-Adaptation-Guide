@@ -31,6 +31,7 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
 
     [Header("Task Manager")]
     [SerializeField] private TaskManager taskManager;
+    [SerializeField] private ArrowManager arrowManager;
 
     private Dictionary<int, GameObject> spawnedMarkers = new Dictionary<int, GameObject>();
     private Dictionary<int, GameObject> prefabLookup;
@@ -217,7 +218,14 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
         {
             int id = ids[i];
             seenThisFrame.Add(id);
-            if (!prefabLookup.TryGetValue(id, out var prefab) || prefab == null) continue;
+
+            MarkerPrefabMapping m = markerPrefabs.Find(mp => mp.markerId == id);
+            if (m == null) continue;
+
+            bool isTail = m.cardName != null && m.cardName.StartsWith("tail_");
+            bool isHead = m.cardName != null && m.cardName.StartsWith("head_");
+
+            if (!isTail && !isHead && m.prefab == null) continue;
 
             var rvecMat = new Mat();
             var tvecMat = new Mat();
@@ -253,7 +261,9 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
 
             if (!spawnedMarkers.TryGetValue(id, out var obj) || obj == null)
             {
-                obj = Instantiate(prefab);
+                if (isTail) obj = CreateDot(new UnityEngine.Color(1f, 0.5f, 0f));
+                else if (isHead) obj = CreateDot(new UnityEngine.Color(0.5f, 0f, 0.5f));
+                else obj = Instantiate(m.prefab);
                 spawnedMarkers[id] = obj;
             }
             obj.transform.SetPositionAndRotation(markerInWorld.GetColumn(3), markerInWorld.rotation);
@@ -290,8 +300,19 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
                 else if (m.cardName.StartsWith("tail_")) tailDict[m.cardName] = obj;
                 else if (m.cardName.StartsWith("head_")) headDict[m.cardName] = obj;
             }
-            taskManager.UpdateMarkers(nodeDict,  tailDict, headDict); 
+            taskManager.UpdateMarkers(nodeDict,  tailDict, headDict);
+            if (arrowManager != null) arrowManager.UpdateMarkers(nodeDict, tailDict, headDict);
         }
         img.Dispose();
+    }
+    private GameObject CreateDot(UnityEngine.Color color)
+    {
+        GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        dot.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
+        var renderer = dot.GetComponent<Renderer>();
+        renderer.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        renderer.material.color = color;
+        Destroy(dot.GetComponent<Collider>());
+        return dot;
     }
 }
