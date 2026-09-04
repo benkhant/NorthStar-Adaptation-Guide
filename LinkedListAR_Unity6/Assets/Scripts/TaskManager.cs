@@ -84,7 +84,7 @@ public class TaskManager : MonoBehaviour
 
                 // Hide node_20 so it doesn't keep showing up
                 // at its last known spot.
-                trackedImageInfo.LockHidden("node_20");
+                if (trackedImageInfo != null) trackedImageInfo.LockHidden("node_20");
             }
             return;
         }
@@ -131,9 +131,8 @@ public class TaskManager : MonoBehaviour
             // away to keep things visually clean. Only node_20
             // actually needs to be physically removed for the timer
             // above to count as "done" though.
-            trackedImageInfo.LockHidden("tail_20");
-            trackedImageInfo.LockHidden("head_20");
-            UpdateNodeColors();
+            if (trackedImageInfo != null) trackedImageInfo.LockHidden("tail_20");
+            if (trackedImageInfo != null) trackedImageInfo.LockHidden("head_20"); UpdateNodeColors();
             return;
         }
 

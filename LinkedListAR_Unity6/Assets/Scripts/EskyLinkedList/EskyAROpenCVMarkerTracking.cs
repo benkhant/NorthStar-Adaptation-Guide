@@ -22,11 +22,15 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
     public class MarkerPrefabMapping
     {
         public int markerId;
+        public string cardName;
         public GameObject prefab;
     }
 
     [Header("Marker to Prefab Mapping")]
     [SerializeField] private List<MarkerPrefabMapping> markerPrefabs = new List<MarkerPrefabMapping>();
+
+    [Header("Task Manager")]
+    [SerializeField] private TaskManager taskManager;
 
     private Dictionary<int, GameObject> spawnedMarkers = new Dictionary<int, GameObject>();
     private Dictionary<int, GameObject> prefabLookup;
@@ -269,6 +273,24 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
                     kvp.Value.SetActive(false);
                 }
             }
+        }
+
+        if (taskManager != null)
+        {
+            var nodeDict = new Dictionary<string, GameObject>();
+            var tailDict = new Dictionary<string, GameObject>();
+            var headDict = new Dictionary<string, GameObject>();
+
+            foreach (var m in markerPrefabs)
+            {
+                if (string.IsNullOrEmpty(m.cardName)) continue;
+                if (!spawnedMarkers.TryGetValue(m.markerId, out var obj) || obj == null) continue;
+
+                if (m.cardName.StartsWith("node_")) nodeDict[m.cardName] = obj;
+                else if (m.cardName.StartsWith("tail_")) tailDict[m.cardName] = obj;
+                else if (m.cardName.StartsWith("head_")) headDict[m.cardName] = obj;
+            }
+            taskManager.UpdateMarkers(nodeDict,  tailDict, headDict); 
         }
         img.Dispose();
     }
