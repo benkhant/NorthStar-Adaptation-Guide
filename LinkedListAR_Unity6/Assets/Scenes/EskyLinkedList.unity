@@ -551,6 +551,13 @@ MonoBehaviour:
   rgbSensorSource: {fileID: 1854400553}
   arCameraTransform: {fileID: 258586592}
   targetModel: {fileID: 2086787599}
+  markerPrefabs:
+  - markerId: 0
+    prefab: {fileID: 2086787599}
+  - markerId: 1
+    prefab: {fileID: 8830316924320969480, guid: e5dcbf09deb37454b989d07096d802d4, type: 3}
+  - markerId: 2
+    prefab: {fileID: 8830316924320969480, guid: 0628af7ee66ef53459d2fb383de1e31b, type: 3}
   cameraPreviewImage: {fileID: 1886403928}
   markerSize: 0.05
   gridSize: 0.045

@@ -18,6 +18,22 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
     [Header("Target object")]
     [SerializeField] private GameObject targetModel;
 
+    [System.Serializable]
+    public class MarkerPrefabMapping
+    {
+        public int markerId;
+        public GameObject prefab;
+    }
+
+    [Header("Marker to Prefab Mapping")]
+    [SerializeField] private List<MarkerPrefabMapping> markerPrefabs = new List<MarkerPrefabMapping>();
+
+    private Dictionary<int, GameObject> spawnedMarkers = new Dictionary<int, GameObject>();
+    private Dictionary<int, GameObject> prefabLookup;
+
+    private Dictionary<int, int> missedFrames = new Dictionary<int, int>();
+    private const int maxMissedFrames = 10;
+
     [Header("Debug Display")]
     [SerializeField] private UnityEngine.UI.RawImage cameraPreviewImage;
 
@@ -70,6 +86,13 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
 
         BuildCameraIntrinsics();
         rgbSensorSource.SubscribeImageCallback(OnImageReceived);
+    }
+
+    private void BuildPrefabLookup()
+    {
+        prefabLookup = new Dictionary<int, GameObject>();
+        foreach (var m in markerPrefabs)
+            prefabLookup[m.markerId] = m.prefab;
     }
 
     private void OnDestroy()
@@ -179,85 +202,73 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
         if (dictionary == null) { img.Dispose(); return; }
 
         CvAruco.DetectMarkers(img, dictionary, out var corners, out var ids, parameters, out var rejected);
+        foreach (var id in ids) Debug.Log("[EskyCvAruco] Saw marker ID: " + id);
         Debug.Log("[EskyCvAruco] Detected: " + ids.Length + " markers, Rejected candidates: " + rejected.Length);
 
-        if (ids.Length > 0)
+        if (prefabLookup == null) BuildPrefabLookup();
+
+        var seenThisFrame = new HashSet<int>();
+
+        for (int i = 0; i < ids.Length; i++)
         {
-            if (showDebugInfo) CvAruco.DrawDetectedMarkers(img, corners, ids);
+            int id = ids[i];
+            seenThisFrame.Add(id);
+            if (!prefabLookup.TryGetValue(id, out var prefab) || prefab == null) continue;
 
-            var boardPoints = new List<Point3f>();
-            var imagePoints = new List<Point2f>();
-            const int boardCols = 5, boardRows = 4;
-            var boardWidth = boardCols * gridSize;
-            var boardHeight = boardRows * gridSize;
-            var boardCenterX = boardWidth * 0.5f;
-            var boardCenterY = -boardHeight * 0.5f;
+            var rvecMat = new Mat();
+            var tvecMat = new Mat();
+            CvAruco.EstimatePoseSingleMarkers(new[] { corners[i] }, markerSize, camMatrix, distCoeffs, rvecMat, tvecMat);
 
-            for (var i = 0; i < ids.Length; i++)
+            var rvec = new Vec3d(rvecMat.Get<double>(0, 0), rvecMat.Get<double>(0, 1), rvecMat.Get<double>(0, 2));
+            var tvec = new Vec3d(tvecMat.Get<double>(0, 0), tvecMat.Get<double>(0, 1), tvecMat.Get<double>(0, 2));
+            rvecMat.Dispose();
+            tvecMat.Dispose();
+
+            var rvecForRodrigues = new Mat(1, 3, MatType.CV_64FC1);
+            rvecForRodrigues.Set(0, 0, rvec.Item0);
+            rvecForRodrigues.Set(0, 1, rvec.Item1);
+            rvecForRodrigues.Set(0, 2, rvec.Item2);
+
+            var rotMat = new Mat();
+            Cv2.Rodrigues(rvecForRodrigues, rotMat);
+            rvecForRodrigues.Dispose();
+
+            var markerInCamera = new Matrix4x4();
+            markerInCamera.SetColumn(0, new Vector4((float)rotMat.Get<double>(0, 0), (float)rotMat.Get<double>(1, 0), (float)rotMat.Get<double>(2, 0), 0));
+            markerInCamera.SetColumn(1, new Vector4((float)rotMat.Get<double>(0, 1), (float)rotMat.Get<double>(1, 1), (float)rotMat.Get<double>(2, 1), 0));
+            markerInCamera.SetColumn(2, new Vector4((float)rotMat.Get<double>(0, 2), (float)rotMat.Get<double>(1, 2), (float)rotMat.Get<double>(2, 2), 0));
+            markerInCamera.SetColumn(3, new Vector4((float)tvec.Item0, (float)tvec.Item1, (float)tvec.Item2, 1));
+            rotMat.Dispose();
+
+            var flipY = Matrix4x4.Scale(new Vector3(1, -1, 1));
+            markerInCamera = flipY * markerInCamera * flipY;
+
+            var cameraPose = GetActiveCameraPose();
+            var cameraInWorld = Matrix4x4.TRS(cameraPose.position, cameraPose.rotation, Vector3.one);
+            var markerInWorld = cameraInWorld * markerInCamera;
+
+            if (!spawnedMarkers.TryGetValue(id, out var obj) || obj == null)
             {
-                var markerId = ids[i];
-                if (!boardMarkerPositions.TryGetValue(markerId, out var boardOrigin)) continue;
-
-                var x0 = boardOrigin.x * gridSize + marginSize;
-                var y0 = boardOrigin.y * gridSize - marginSize;
-                x0 -= boardCenterX; y0 -= boardCenterY;
-
-                boardPoints.Add(new Point3f(x0, y0, 0));
-                boardPoints.Add(new Point3f(x0 + markerSize, y0, 0));
-                boardPoints.Add(new Point3f(x0 + markerSize, y0 - markerSize, 0));
-                boardPoints.Add(new Point3f(x0, y0 - markerSize, 0));
-
-                var dc = corners[i];
-                imagePoints.Add(dc[0]); imagePoints.Add(dc[1]); imagePoints.Add(dc[2]); imagePoints.Add(dc[3]);
+                obj = Instantiate(prefab);
+                spawnedMarkers[id] = obj;
             }
-
-            if (boardPoints.Count >= 4)
-            {
-                var rvec = new Mat(); var tvec = new Mat();
-                try
-                {
-                    Cv2.SolvePnP(InputArray.Create(boardPoints), InputArray.Create(imagePoints), camMatrix, distCoeffs, rvec, tvec);
-
-                    var rotMat = new Mat();
-                    Cv2.Rodrigues(rvec, rotMat);
-
-                    var boardInCamera = new Matrix4x4();
-                    boardInCamera.SetColumn(0, new Vector4((float)rotMat.Get<double>(0, 0), (float)rotMat.Get<double>(1, 0), (float)rotMat.Get<double>(2, 0), 0));
-                    boardInCamera.SetColumn(1, new Vector4((float)rotMat.Get<double>(0, 1), (float)rotMat.Get<double>(1, 1), (float)rotMat.Get<double>(2, 1), 0));
-                    boardInCamera.SetColumn(2, new Vector4((float)rotMat.Get<double>(0, 2), (float)rotMat.Get<double>(1, 2), (float)rotMat.Get<double>(2, 2), 0));
-                    boardInCamera.SetColumn(3, new Vector4((float)tvec.Get<double>(0), (float)tvec.Get<double>(1), (float)tvec.Get<double>(2), 1));
-                    rotMat.Dispose();
-
-                    var flipY = Matrix4x4.Scale(new Vector3(1, -1, 1));
-                    boardInCamera = flipY * boardInCamera * flipY;
-
-                    var cameraPose = GetActiveCameraPose();
-                    var cameraInWorld = Matrix4x4.TRS(cameraPose.position, cameraPose.rotation, Vector3.one);
-                    var boardInWorld = cameraInWorld * boardInCamera;
-
-                    var zOffset = 0.05f;
-                    Vector3 boardPos = boardInWorld.GetColumn(3);
-                    Vector3 boardBack = -(Vector3)boardInWorld.GetColumn(2);
-                    Vector3 targetPos = boardPos + boardBack * zOffset;
-
-                    if (targetModel)
-                    {
-                        targetModel.transform.SetPositionAndRotation(targetPos, boardInWorld.rotation);
-                        targetModel.transform.localScale = Vector3.one * markerSize;
-                        targetModel.SetActive(true);
-                    }
-                }
-                catch (OpenCvSharp.OpenCVException e)
-                {
-                    Debug.LogWarning("[EskyCvAruco] solvePnP failed: " + e.Message);
-                }
-                rvec.Dispose(); tvec.Dispose();
-            }
+            obj.transform.SetPositionAndRotation(markerInWorld.GetColumn(3), markerInWorld.rotation);
+            obj.SetActive(true);
         }
-        else
+
+        foreach (var kvp in spawnedMarkers)
         {
-            if (showDebugInfo) CvAruco.DrawDetectedMarkers(img, rejected, null, new Scalar(255, 0, 0));
-            if (targetModel) targetModel.SetActive(false);
+            if (seenThisFrame.Contains(kvp.Key))
+            {
+                missedFrames[kvp.Key] = 0;
+            } else if (kvp.Value != null) {
+                if (!missedFrames.ContainsKey(kvp.Key)) missedFrames[kvp.Key] = 0;
+                missedFrames[kvp.Key]++;
+                if (missedFrames[kvp.Key] > maxMissedFrames)
+                {
+                    kvp.Value.SetActive(false);
+                }
+            }
         }
         img.Dispose();
     }
