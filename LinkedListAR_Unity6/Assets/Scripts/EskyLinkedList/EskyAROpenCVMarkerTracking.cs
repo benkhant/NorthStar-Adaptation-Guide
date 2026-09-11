@@ -37,7 +37,7 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
     private Dictionary<int, GameObject> prefabLookup;
 
     private Dictionary<int, int> missedFrames = new Dictionary<int, int>();
-    private const int maxMissedFrames = 10;
+    private const int maxMissedFrames = 3;
 
     [Header("Debug Display")]
     [SerializeField] private UnityEngine.UI.RawImage cameraPreviewImage;
