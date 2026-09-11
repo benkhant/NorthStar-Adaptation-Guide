@@ -305,85 +305,70 @@ namespace Microsoft.MixedReality.Toolkit.Esky.LeapMotion.Input
         [Tooltip("Should we dump the current settins after stopping the 'play in editor?'")]
         private bool saveAfterStoppingEditor;
 
-    
-        [SerializeField]
         public bool SaveAfterStoppingEditor{
             get => saveAfterStoppingEditor;
             set => saveAfterStoppingEditor = value;
         }
-        [SerializeField]
         public FilterSystemToUse FilterSystemToUse{
             get => filterSystemToUse;
             set => filterSystemToUse = value;
         }
-        [SerializeField]
         public RigToUse RigToUse{
             get => rigToUse;
             set => rigToUse = value;            
         }
-        [SerializeField]
         public GameObject CustomRig{
             get => customRig;
             set => customRig = value;
         }
-        [SerializeField]
         public EskySensorOffsets SensorOffsets{
             get => sensorOffsets;
             set => sensorOffsets = value;
         }
-        [SerializeField]
         public bool UsesCameraPreview{
             get => usesCameraPreview;
             set => usesCameraPreview = value;
         }
 
-        [SerializeField]
         public TargetApplicationFrameRate TargetFrameRate{
             get => targetFrameRate;
             set => targetFrameRate = value;
         }
         
         
-        [SerializeField]
         public TemporalReprojectionSettings ReprojectionSettings{
             get => reprojectionSettings;
             set => reprojectionSettings = value;
         }
         
-        [SerializeField]
         public NativeShaderToUse NativeShaderToUse{
             get => nativeShaderToUse;
             set => nativeShaderToUse = value;
         }
 
-        [SerializeField]
         public DisplayCalibrationV2 V2CalibrationValues{
             get => v2CalibrationValues;
             set => v2CalibrationValues = value;
         }
 
 
-        [SerializeField]
         public EskyV1DisplayCalibrations V1CalibrationValues{
             get => v1CalibrationValues;
             set => v1CalibrationValues = value;
         }
-        [SerializeField]
         public DisplayWindowSettings DisplayWindowSettings{
             get => displayWindowSettings;
             set => displayWindowSettings = value;
         }
-        [SerializeField]
         public RGBSensorModuleCalibrations SensorModuleCalibrations{
             get => sensorModuleCalibrations;
             set => sensorModuleCalibrations = value;
         }
-        [SerializeField]
+        
         public bool UsesExternalRGBCamera{
             get => usesExternalRGBCamera;
             set => usesExternalRGBCamera = value;
         }
-        [SerializeField]
         public bool UseNetworkingDebugRig{
             get => useNetworkingDebugRig;
             set => useNetworkingDebugRig = value;
