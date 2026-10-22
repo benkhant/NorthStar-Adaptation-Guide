@@ -126,3 +126,6 @@ LinkedListAR_Unity6/obj/
 LinkedListAR_Unity6/Build/
 LinkedListAR_Unity6/Builds/
 LinkedListAR_Unity6/UserSettings/
+.vscode/
+_Recovery/
+_Recovery.meta
