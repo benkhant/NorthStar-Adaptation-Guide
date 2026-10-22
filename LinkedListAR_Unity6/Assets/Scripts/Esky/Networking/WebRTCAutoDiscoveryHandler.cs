@@ -572,7 +572,7 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
             jsonreq.ModifyRequest("EventID","SDPAnswer");
             jsonreq.ModifyRequest("Answer",offer);                         
             string location = "http://"+HostingIP+":"+WebAPIInterface.instance.port+"/";
-            UnityWebRequest request = UnityWebRequest.Post(location,JsonUtility.ToJson(jsonreq));
+            UnityWebRequest request = UnityWebRequest.PostWwwForm(location,JsonUtility.ToJson(jsonreq));
             request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(jsonreq)));
             request.uploadHandler.contentType = "application/json";                 
             yield return request.SendWebRequest();
