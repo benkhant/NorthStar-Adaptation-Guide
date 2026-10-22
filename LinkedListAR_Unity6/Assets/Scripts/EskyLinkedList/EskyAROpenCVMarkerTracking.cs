@@ -5,7 +5,7 @@ using OpenCvSharp;
 using OpenCvSharp.Aruco;
 using UnityEngine;
 using BEERLabs.ProjectEsky;
-using BEERLabs.ProjectEsky.Extras.Modules;
+//using BEERLabs.ProjectEsky.Extras.Modules;
 
 // Adapted from Prof. Lee's AROpenCVMarkerTracking.cs.
 // Swaps AR Foundation's camera for Esky's EskyRGBSensorModule as the image source.
@@ -14,9 +14,6 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
     [Header("Esky camera source")]
     [SerializeField] private SensorImageSource rgbSensorSource;
     [SerializeField] private Transform arCameraTransform; // e.g. ARCameraRig/Head
-
-    [Header("Target object")]
-    [SerializeField] private GameObject targetModel;
 
     [System.Serializable]
     public class MarkerPrefabMapping

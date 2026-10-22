@@ -8,7 +8,11 @@ using System.Text;
 using System.Linq;
 using System.ComponentModel;
 using System.Threading;
-using Microsoft.MixedReality.WebRTC;
+// [MIGRATION] CHANGED: was "using Microsoft.MixedReality.WebRTC;". Esky now uses com.unity.webrtc (namespace Unity.WebRTC),
+// which Unity's Package Manager installs from Packages/manifest.json. NOTE: inside the BEERLabs.ProjectEsky.Networking.WebRTC
+// namespace the bare identifier "WebRTC" resolves to the Esky namespace, so never call com.unity.webrtc's static
+// WebRTC class unqualified here; use global::Unity.WebRTC.WebRTC.* if it is ever needed.
+using Unity.WebRTC;
 using System.Threading.Tasks;
 using UnityEngine.Events;
 using BEERLabs.ProjectEsky.Networking;
@@ -30,51 +34,25 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
     }    
-    public class PackageManagerHookBehaviour : Microsoft.MixedReality.WebRTC.Unity.Signaler{
+    // [MIGRATION] CHANGED CLASS: this used to derive from Microsoft.MixedReality.WebRTC.Unity.Signaler, which supplied
+    //   (a) the "PeerConnection" field and the protected "_nativePeer",
+    //   (b) a main-thread work queue pumped by Update(), and
+    //   (c) the abstract SendMessageAsync(SdpMessage / IceCandidate) methods.
+    // com.unity.webrtc has no Signaler and no PeerConnection component, and its callbacks already run on the Unity main thread,
+    // so none of that is needed. The class is kept (same name, same public members BytesReceived / SendBytes) so existing
+    // references still compile; it is now a plain MonoBehaviour. Update() stays virtual so subclasses can still call base.Update().
+    public class PackageManagerHookBehaviour : MonoBehaviour{
         public delegate void BytesReceivedDelegate(byte[] b);
         public BytesReceivedDelegate BytesReceived;
         public virtual void SendBytes(byte[] b){
             
         }
-        public override Task SendMessageAsync(SdpMessage message)
-        {
-            return null;
-        }
-
-        /// <inheritdoc/>
-        public override Task SendMessageAsync(IceCandidate candidate)
-        {
-            return null;
+        protected virtual void Update(){
         }
     }
     
-
-    [System.Serializable]
-    public class IceMessageWebsocket{
-        public string candidate;
-        public int sdpMlineIndex;
-        public string sdpMid;
-        public IceMessageWebsocket(string cand, int sdpmline, string sdpmid){
-            candidate = cand;
-            sdpMlineIndex = sdpmline;
-            sdpMid = sdpmid;
-        }
-    }
-    [System.Serializable]
-    public class SdpMessageWebsocket{
-        public string sdp;
-        public string type;
-        public SdpMessageWebsocket(string sdpMessage, string sdpType){
-            sdp = sdpMessage;
-            type = sdpType; 
-        }
-    }
-    
-    [System.Serializable]
-    public class WebrtcShakeClass{
-        public List<IceMessageWebsocket> iceMessages;
-        public SdpMessageWebsocket sdpMessage;
-    }
+    // [MIGRATION] IceMessageWebsocket, SdpMessageWebsocket and WebrtcShakeClass were MOVED UNCHANGED to
+    // WebRTCCore/EskyPeerConnection.cs (assembly BEERLabs.ProjectEsky.Networking.WebRTC.Core, same namespace).
     public delegate void CreateOfferDelegate();
     public delegate void CreateResponseDelegate();
 
@@ -103,6 +81,15 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
         [Range(0.0f,5f)]
         public float TimeoutBeforeRemovalFromList = 3f;
 
+        // [MIGRATION] NEW serialized settings. They replace what used to be configured on the child "PeerConnection" component of the
+        // WebRTCConnectionManager prefab (IceServers = [STUN stun.l.google.com:19302], IceUsername, IceCredential) and the
+        // PeerConnection.OnInitialized -> StartMyConnection UnityEvent wiring (now done by autoStartConnection).
+        [Header("WebRTC (com.unity.webrtc)")]
+        public bool autoStartConnection = true;
+        public string[] IceServerUrls = new string[]{"stun:stun.l.google.com:19302"};
+        public string IceUsername = "";
+        public string IceCredential = "";
+
         public static WebRTCAutoDiscoveryHandler instance;
         BackgroundWorker objWorkerDiscovery;
         AutoDiscoverySender ads;
@@ -123,8 +110,18 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
         bool initConnection = false;
         bool discConnection = false;
         bool currentlyConnected = false;
-        SdpMessage sdpOffer = null;
-        SdpMessage sdpAnswer = null;
+        // [MIGRATION] CHANGED: these held Microsoft SdpMessage objects ({Type, Content}). com.unity.webrtc takes the type and the
+        // SDP text separately (RTCSessionDescription), and the type is implied by which field is used, so plain strings are enough.
+        string sdpOffer = null;
+        string sdpAnswer = null;
+        // [MIGRATION] NEW: the ICE candidates that arrived together with the remote offer / answer. They are handed to the session
+        // together with the SDP so they cannot be lost if the session is replaced between receiving the HTTP message and handling it.
+        List<IceMessageWebsocket> sdpOfferIce = new List<IceMessageWebsocket>();
+        List<IceMessageWebsocket> sdpAnswerIce = new List<IceMessageWebsocket>();
+        // [MIGRATION] NEW: replaces the "PeerConnection" component that used to be referenced by the Signaler base class.
+        EskyPeerConnection session = null;
+        bool sessionResetRequested = false;
+        bool myConnectionStarted = false;
         [HideInInspector]
         public int connected = 0;
         public void Awake(){
@@ -154,11 +151,29 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
                 Debug.Log("We are already connected");
             }
         }
+        // [MIGRATION] CHANGED: Start() now creates the WebRTC session. Previously the child PeerConnection component initialised itself in
+        // OnEnable() and its OnInitialized UnityEvent (wired in the prefab / scene) called StartMyConnection(). The event no longer exists,
+        // so StartMyConnection() is invoked from here one frame later (the old initialisation was asynchronous, so other scripts had
+        // already run Start(), e.g. to set isHosting). Set autoStartConnection=false to call StartMyConnection() yourself.
         public void Start() {
             instance = this;
-            
+            CreateSession();
+            if(autoStartConnection){
+                StartCoroutine(StartMyConnectionNextFrame());
+            }
         }
+        IEnumerator StartMyConnectionNextFrame(){
+            yield return null;
+            StartMyConnection();
+        }
+        // [MIGRATION] CHANGED: now idempotent. The old UnityEvent fired it exactly once; an accidental second call (e.g. a leftover
+        // persistent listener plus autoStartConnection) would subscribe the web events twice.
         public void StartMyConnection(){
+            if(myConnectionStarted){
+                Debug.Log("Connection already started");
+                return;
+            }
+            myConnectionStarted = true;
             Debug.Log("Starting my Connection");
             WebAPIInterface.instance.SubscribeWebEvent("StopDiscovery",StopDiscoveryAnswering);
             StartReceiver();
@@ -197,27 +212,26 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
             objWorkerDiscovery.ProgressChanged += new ProgressChangedEventHandler(LogProgressChanged);
             objWorkerDiscovery.RunWorkerAsync();          
         }
+        // [MIGRATION] CHANGED FUNCTION: the three WebRTC branches no longer call the Task-based Microsoft API
+        // (PeerConnection.StartConnection / HandleConnectionMessageAsync(...).ContinueWith / _nativePeer.CreateAnswer).
+        // They start the equivalent coroutines on the EskyPeerConnection session. Everything else is unchanged:
+        // the flag-pump pattern (flags set by the HTTP / UDP threads, executed here), heartbeat and connect/drop events.
+        // Added: (1) a session reset when the previous session failed or was disconnected, so the next discovery round starts
+        // from a fresh peer (a closed/failed RTCPeerConnection cannot be renegotiated); this is processed BEFORE the offer/answer
+        // flags so a new offer is never applied to a dead session.
         private void FixedUpdate() {
             ProcessHeartBeat();
-            if(createOffer){createOffer = false;PeerConnection.StartConnection(); Debug.Log("Starting Webrtc connection");}     
+            if(sessionResetRequested){sessionResetRequested = false; ResetSession();}
+            if(createOffer){createOffer = false; StartOffer(); Debug.Log("Starting Webrtc connection");}     
             if(receiveOffer){receiveOffer = false;
-                PeerConnection.HandleConnectionMessageAsync(sdpOffer).ContinueWith(_ =>
-                {
-                    Debug.Log("Handled offer");
-                    // If the remote description was successfully applied then immediately send
-                    // back an answer to the remote peer to acccept the offer.
-                    waitingToCreateAnswer = true;
-                    _nativePeer.CreateAnswer();
-                }, TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.RunContinuationsAsynchronously);     
+                StartCoroutine(HandleReceivedOffer(sdpOffer, sdpOfferIce));
             }
             if(receiveAnswer){receiveAnswer = false;
                 connected += 1;
-                PeerConnection.HandleConnectionMessageAsync(sdpAnswer).ContinueWith(_ =>
-                {
-                }, TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.RunContinuationsAsynchronously);
+                StartCoroutine(HandleReceivedAnswer(sdpAnswer, sdpAnswerIce));
             }
             if(initConnection){initConnection = false;}
-            if(discConnection){discConnection = false;}
+            if(discConnection){discConnection = false; ResetSession();}
             if(currentlyConnected != isConnected){
                 currentlyConnected = isConnected;
                 if(currentlyConnected){
@@ -227,6 +241,55 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
                     onConnectionDropped.Invoke();
                 }
             }
+        }
+        // [MIGRATION] NEW: creates (or re-creates) the WebRTC session. Replaces the PeerConnection component's InitializeAsync().
+        // Local ICE candidates are collected into "shake" exactly as before; it is cleared here so a new session never sends
+        // candidates that belong to a previous one.
+        void CreateSession(){
+            if(shake == null){ shake = new WebrtcShakeClass(); }
+            if(shake.iceMessages == null){ shake.iceMessages = new List<IceMessageWebsocket>(); }
+            else{ shake.iceMessages.Clear(); }
+            session = new EskyPeerConnection(IceServerUrls, IceUsername, IceCredential);
+            session.LocalIceCandidateReady += OnIceCandidateReadyToSend;
+            session.LocalOfferReady += OnSdpOfferReadyToSend;
+            session.LocalAnswerReady += OnSdpAnswerReadyToSend;
+            session.MessageReceived += (channelId, bytes) => ReceiveMessageData(bytes);
+            session.ChannelStateChanged += (channelId, state) => DataChannelOpen();
+            session.OfferApplied += () => { Debug.Log("Handled offer"); waitingToCreateAnswer = true; };
+            session.ConnectionStateChanged += OnPeerConnectionStateChanged;
+            OnPeerInitialized();
+        }
+        // [MIGRATION] NEW: tears the current session down and starts a fresh one (see FixedUpdate).
+        void ResetSession(){
+            if(session != null){
+                session.Dispose();
+                session = null;
+            }
+            knownDataChannels.Clear();
+            CreateSession();
+        }
+        // [MIGRATION] NEW: a failed ICE/DTLS connection behaves like the control channel closing: the connection is dropped and the
+        // session is replaced on the next FixedUpdate. Transient "Disconnected" is ignored (the Esky heartbeat timeout handles it).
+        void OnPeerConnectionStateChanged(RTCPeerConnectionState state){
+            if(state == RTCPeerConnectionState.Failed){
+                discConnection = true;
+                isConnected = false;
+            }
+        }
+        // [MIGRATION] NEW: replaces PeerConnection.StartConnection().
+        void StartOffer(){
+            if(session == null){ CreateSession(); }
+            StartCoroutine(session.CreateOffer());
+        }
+        // [MIGRATION] NEW: replaces HandleConnectionMessageAsync(offer).ContinueWith(_ => { waitingToCreateAnswer = true; CreateAnswer(); }).
+        IEnumerator HandleReceivedOffer(string offerSdp, List<IceMessageWebsocket> remoteIce){
+            if(session == null){ CreateSession(); }
+            yield return session.HandleOffer(offerSdp, remoteIce);
+        }
+        // [MIGRATION] NEW: replaces HandleConnectionMessageAsync(answer).
+        IEnumerator HandleReceivedAnswer(string answerSdp, List<IceMessageWebsocket> remoteIce){
+            if(session == null){ CreateSession(); }
+            yield return session.HandleAnswer(answerSdp, remoteIce);
         }
         public IEnumerator SendHeartbeat(){            
         //    Debug.Log("Sending Heartbeat");
@@ -300,6 +363,8 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
             }
             ClientsFound = ClientsDiscovered.Count;
         }
+        // [MIGRATION] NOTE: unchanged body. base.Update() used to drain Signaler's main-thread work queue; it is now an empty virtual
+        // in PackageManagerHookBehaviour (callbacks are already on the main thread).
         protected override void Update(){
             base.Update();
              while(cancellationsToSend.Count > 0){
@@ -322,60 +387,57 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
         public void ReceiveMessageData(byte[] b){   
             messagesQueue.Add(b); 
         }
+        // [MIGRATION] CHANGED FUNCTION: was knownDataChannels[1].SendMessage(b) (Microsoft DataChannel). Still channel 1, still bytes;
+        // now goes through EskyPeerConnection.Send, which returns false (instead of throwing) if the channel is not open.
         public override void SendBytes(byte[] b){
-                knownDataChannels[1].SendMessage(b);
+                if(session != null){ session.Send(EskyPeerConnection.UnreliableTransferChannelId, b); }
         }
+        // [MIGRATION] CHANGED FUNCTION: see SendBytes. The original also used channel 1 here (channel 2 "reliabletransferChannel" was created
+        // but never used); that is preserved on purpose. Both channels are ordered+reliable anyway.
         public void SendBytesReliable(byte[] b){
-                knownDataChannels[1].SendMessage(b);
+                if(session != null){ session.Send(EskyPeerConnection.UnreliableTransferChannelId, b); }
         }
         public void Disconnect(){
                 discConnection = true;
                 isConnected = false;                
         }
-        public Dictionary<int,DataChannel> knownDataChannels = new Dictionary<int, DataChannel>();
-        public void DataChannelAddedDelegate(DataChannel channel){
-           // Debug.LogError("Data Channel Added, ID: " + channel.ID + ", Label: " + channel.Label);
-            channel.MessageReceived += ReceiveMessageData;
-            channel.StateChanged += DataChannelOpen;
-            knownDataChannels.Add(channel.ID,channel);
+        // [MIGRATION] CHANGED: value type is now com.unity.webrtc's RTCDataChannel (was Microsoft DataChannel). Filled by OnPeerInitialized().
+        public Dictionary<int,RTCDataChannel> knownDataChannels = new Dictionary<int, RTCDataChannel>();
+        // [MIGRATION] CHANGED FUNCTION: kept as a public entry point for external callers that create their own channel. Parameter type is
+        // RTCDataChannel; MessageReceived/StateChanged events became the OnMessage/OnOpen/OnClose delegates, channel.ID became channel.Id.
+        // The Esky channels themselves are wired inside EskyPeerConnection and do not go through this method.
+        public void DataChannelAddedDelegate(RTCDataChannel channel){
+            channel.OnMessage = ReceiveMessageData;
+            channel.OnOpen = DataChannelOpen;
+            channel.OnClose = DataChannelOpen;
+            knownDataChannels[channel.Id] = channel;
         }
+        // [MIGRATION] CHANGED FUNCTION: logic identical (channel 0 Open => connected, Closed => disconnected). The state is now read from
+        // RTCDataChannel.ReadyState / RTCDataChannelState instead of DataChannel.State / ChannelState, via the session (safe if the session was replaced).
         public void DataChannelOpen(){
-            switch(knownDataChannels[0].State){
-                case DataChannel.ChannelState.Open:
+            if(session == null){ return; }
+            switch(session.GetChannelState(EskyPeerConnection.MessageTransferChannelId)){
+                case RTCDataChannelState.Open:
                 initConnection = true;                
                 isConnected = true;
                 break;
-                case DataChannel.ChannelState.Closed:
+                case RTCDataChannelState.Closed:
                 discConnection = true;
                 isConnected = false;
                 break;
             } 
         }
-        public override void OnPeerInitialized(){ 
-//            Debug.Log("On initialized");
-            base.OnPeerInitialized();
-            PeerConnection.Peer.DataChannelAdded += DataChannelAddedDelegate;
-            PeerConnection.Peer.AddDataChannelAsync(0, "message_transfer", true, true).ContinueWith((prevTask) => 
-            { 
-                if (prevTask.Exception != null) 
-                { 
-                    throw prevTask.Exception; 
-                } 
-            });    
-            PeerConnection.Peer.AddDataChannelAsync(1, "unreliabletransferChannel", true, true).ContinueWith((prevTask) => 
-            { 
-                if (prevTask.Exception != null) 
-                { 
-                    throw prevTask.Exception; 
-                } 
-            });      
-            PeerConnection.Peer.AddDataChannelAsync(2, "reliabletransferChannel", true, true).ContinueWith((prevTask) => 
-            { 
-                if (prevTask.Exception != null) 
-                { 
-                    throw prevTask.Exception; 
-                } 
-            });              
+        // [MIGRATION] CHANGED FUNCTION: used to be "override" of Signaler.OnPeerInitialized (fired by the PeerConnection component) and to call
+        // PeerConnection.Peer.AddDataChannelAsync three times with ContinueWith error rethrow. It is now called by CreateSession() and creates the
+        // same three channels (ids 0,1,2; labels message_transfer / unreliabletransferChannel / reliabletransferChannel; ordered and reliable,
+        // pre-negotiated) synchronously; errors surface as exceptions instead of faulted Tasks.
+        public virtual void OnPeerInitialized(){ 
+            session.CreateDataChannels();
+            knownDataChannels.Clear();
+            for(int i = 0; i < EskyPeerConnection.DataChannelCount; i++){
+                RTCDataChannel channel = session.GetChannel(i);
+                if(channel != null){ knownDataChannels[i] = channel; }
+            }
         }
         
         private void LogProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -385,7 +447,13 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
             Debug.Log(e.UserState.ToString());
         }
 
+        // [MIGRATION] CHANGED FUNCTION: additionally disposes the WebRTC session (the Microsoft PeerConnection component did this in its own
+        // OnDisable/OnDestroy; the native peer and data channels of com.unity.webrtc must be released explicitly).
         public void OnDestroy(){
+            if(session != null){
+                session.Dispose();
+                session = null;
+            }
             if(ads != null){
                 ads.Stop();
             }
@@ -400,39 +468,45 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
         }
 
 
+        // [MIGRATION] CHANGED FUNCTION: no longer builds a Microsoft SdpMessage{Type=Offer,Content=sdp}; stores the SDP text and a copy of the
+        // candidates. ICE is no longer applied immediately (see ReceiveIceCandidate): it is applied by the session once the remote description is set.
         public void ReceiveCompletedOffer(WebrtcShakeClass receivedClass){
-            ReceiveIceCandidate(receivedClass);            
-            sdpOffer = new SdpMessage { Type = SdpMessageType.Offer, Content = receivedClass.sdpMessage.sdp};
+            sdpOfferIce = receivedClass.iceMessages != null ? new List<IceMessageWebsocket>(receivedClass.iceMessages) : new List<IceMessageWebsocket>();
+            sdpOffer = receivedClass.sdpMessage.sdp;
             receiveOffer = true;
         }
+        // [MIGRATION] CHANGED FUNCTION: same as ReceiveCompletedOffer, for the answer.
         public void ReceiveCompletedAnswer(WebrtcShakeClass receivedClass){
-            ReceiveIceCandidate(receivedClass);
-            sdpAnswer = new SdpMessage { Type = SdpMessageType.Answer, Content = receivedClass.sdpMessage.sdp};                            
+            sdpAnswerIce = receivedClass.iceMessages != null ? new List<IceMessageWebsocket>(receivedClass.iceMessages) : new List<IceMessageWebsocket>();
+            sdpAnswer = receivedClass.sdpMessage.sdp;
             receiveAnswer = true;
         }
+        // [MIGRATION] CHANGED FUNCTION: was _nativePeer.AddIceCandidate(new IceCandidate{SdpMid,SdpMlineIndex,Content}) per entry. Now forwards to the
+        // session, which queues candidates until a remote description exists (libwebrtc rejects them before that).
         public void ReceiveIceCandidate(WebrtcShakeClass receivedClass){
-            for(int i = 0; i < receivedClass.iceMessages.Count; i++){
-                _nativePeer.AddIceCandidate(new IceCandidate{SdpMid = receivedClass.iceMessages[i].sdpMid,SdpMlineIndex = receivedClass.iceMessages[i].sdpMlineIndex,Content = receivedClass.iceMessages[i].candidate});
-            }
+            if(session == null || receivedClass.iceMessages == null){ return; }
+            session.AddRemoteIceCandidates(receivedClass.iceMessages);
         }
         
-        protected override void OnIceCandidateReadyToSend(IceCandidate candidate)
+        // [MIGRATION] CHANGED FUNCTION: was "protected override void OnIceCandidateReadyToSend(IceCandidate candidate)" of Signaler. The session now
+        // delivers a ready-made IceMessageWebsocket (candidate text / sdpMlineIndex / sdpMid), so the body only appends it to the outgoing bundle.
+        protected virtual void OnIceCandidateReadyToSend(IceMessageWebsocket imws)
         {
-          //Data = string.Join(IceSeparatorChar, candidate.Content, candidate.SdpMlineIndex.ToString(), candidate.SdpMid);      
-            IceMessageWebsocket imws = new IceMessageWebsocket(candidate.Content,candidate.SdpMlineIndex,candidate.SdpMid);
             shake.iceMessages.Add(imws);
         }
-        protected override void OnSdpOfferReadyToSend(SdpMessage offer)
+        // [MIGRATION] CHANGED FUNCTION: was "protected override void OnSdpOfferReadyToSend(SdpMessage offer)" using offer.Content; now takes the SDP text.
+        protected virtual void OnSdpOfferReadyToSend(string offerSdp)
         {
 
-            SdpMessageWebsocket sdpws = new SdpMessageWebsocket(offer.Content,"offer");
+            SdpMessageWebsocket sdpws = new SdpMessageWebsocket(offerSdp,"offer");
             shake.sdpMessage = sdpws;
             StartCoroutine(SendSDPOffer());
         }
-        protected override void OnSdpAnswerReadyToSend(SdpMessage answer)
+        // [MIGRATION] CHANGED FUNCTION: same as OnSdpOfferReadyToSend, for the answer.
+        protected virtual void OnSdpAnswerReadyToSend(string answerSdp)
         {
 
-            SdpMessageWebsocket sdpws = new SdpMessageWebsocket(answer.Content,"answer");
+            SdpMessageWebsocket sdpws = new SdpMessageWebsocket(answerSdp,"answer");
             shake.sdpMessage = sdpws;    
             StartCoroutine(SendSDPAnswer());
 
@@ -444,8 +518,9 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
             switch(key){
                 case "SDPOffer":
                 Debug.Log("Checking: " + key + "," + request.formData["Offer"].Value);                
-                shake = JsonUtility.FromJson<WebrtcShakeClass>(request.formData["Offer"].Value);
-                ReceiveCompletedOffer(shake);
+                // [MIGRATION] CHANGED: the parsed message is no longer assigned to "shake". "shake" is the OUTGOING bundle (local SDP + local
+                // ICE); overwriting it with the remote bundle made the answer re-send the offerer's own candidates back to it.
+                ReceiveCompletedOffer(JsonUtility.FromJson<WebrtcShakeClass>(request.formData["Offer"].Value));
               //  receiveOffer = true;                
                 response.statusCode = 200;
                 response.message = "OK";
@@ -454,8 +529,8 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
                 return true;
                 case "SDPAnswer":
   //              Debug.Log("Checking: " + key + "," + request.formData["Answer"].Value);                
-                shake = JsonUtility.FromJson<WebrtcShakeClass>(request.formData["Answer"].Value);
-                ReceiveCompletedAnswer(shake);                
+                // [MIGRATION] CHANGED: see "SDPOffer" above.
+                ReceiveCompletedAnswer(JsonUtility.FromJson<WebrtcShakeClass>(request.formData["Answer"].Value));                
               //  receiveAnswer = true;                
                 response.statusCode = 200;
                 response.message = "OK";
@@ -497,7 +572,7 @@ namespace BEERLabs.ProjectEsky.Networking.WebRTC.Discovery{
             jsonreq.ModifyRequest("EventID","SDPAnswer");
             jsonreq.ModifyRequest("Answer",offer);                         
             string location = "http://"+HostingIP+":"+WebAPIInterface.instance.port+"/";
-            UnityWebRequest request = UnityWebRequest.PostWwwForm(location,JsonUtility.ToJson(jsonreq));
+            UnityWebRequest request = UnityWebRequest.Post(location,JsonUtility.ToJson(jsonreq));
             request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(jsonreq)));
             request.uploadHandler.contentType = "application/json";                 
             yield return request.SendWebRequest();
