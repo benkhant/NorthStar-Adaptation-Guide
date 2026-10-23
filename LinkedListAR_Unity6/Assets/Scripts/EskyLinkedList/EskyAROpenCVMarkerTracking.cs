@@ -49,6 +49,15 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
     [SerializeField] private bool showDebugInfo = true;
 
     private OpenCvSharp.Aruco.Dictionary dictionary;
+
+    [SerializeField] private float smoothingSpeed = 15f;
+
+    static bool IsFinite(Vector3 v) =>
+        float.IsFinite(v.x) && float.IsFinite(v.y) && float.IsFinite(v.z);
+
+    static bool IsFinite(Quaternion q) =>
+        float.IsFinite(q.x) && float.IsFinite(q.y) && float.IsFinite(q.z) && float.IsFinite(q.w);
+
     private DetectorParameters parameters;
     private Mat camMatrix;
     private Mat distCoeffs;
@@ -228,8 +237,10 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
             var tvecMat = new Mat();
             CvAruco.EstimatePoseSingleMarkers(new[] { corners[i] }, markerSize, camMatrix, distCoeffs, rvecMat, tvecMat);
 
-            var rvec = new Vec3d(rvecMat.Get<double>(0, 0), rvecMat.Get<double>(0, 1), rvecMat.Get<double>(0, 2));
-            var tvec = new Vec3d(tvecMat.Get<double>(0, 0), tvecMat.Get<double>(0, 1), tvecMat.Get<double>(0, 2));
+            //var rvec = new Vec3d(rvecMat.Get<double>(0, 0), rvecMat.Get<double>(0, 1), rvecMat.Get<double>(0, 2));
+            //var tvec = new Vec3d(tvecMat.Get<double>(0, 0), tvecMat.Get<double>(0, 1), tvecMat.Get<double>(0, 2));
+            var rvec = rvecMat.Get<Vec3d>(0, 0);
+            var tvec = tvecMat.Get<Vec3d>(0, 0);
             rvecMat.Dispose();
             tvecMat.Dispose();
 
@@ -256,14 +267,55 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
             var cameraInWorld = Matrix4x4.TRS(cameraPose.position, cameraPose.rotation, Vector3.one);
             var markerInWorld = cameraInWorld * markerInCamera;
 
+            //if (!spawnedMarkers.TryGetValue(id, out var obj) || obj == null)
+            //{
+            //    if (isTail) obj = CreateDot(new UnityEngine.Color(1f, 0.5f, 0f));
+            //    else if (isHead) obj = CreateDot(new UnityEngine.Color(0.5f, 0f, 0.5f));
+            //    else obj = Instantiate(m.prefab);
+            //    spawnedMarkers[id] = obj;
+            //}
+            //obj.transform.SetPositionAndRotation(markerInWorld.GetColumn(3), markerInWorld.rotation);
+            //obj.SetActive(true);
+
+            // Guard: ignore frames where the pose is broken or physically impossible.
+            Vector3 targetPos = markerInWorld.GetColumn(3);
+            float camDist = (float)tvec.Item2;
+            if (!IsFinite(targetPos) || !markerInWorld.ValidTRS() || camDist < 0.05f || camDist > 3f)
+            {
+                Debug.Log($"[EskyCvAruco] Rejected pose for ID {id}: camDist={camDist}, pos={targetPos}");
+                continue;
+            }
+            //Quaternion targetRot = markerInWorld.rotation;
+            //if (!IsFinite(targetRot)) continue;
+
+            // Face the node toward the viewer instead of copying the card's tilt.
+            Vector3 viewDir = targetPos - cameraPose.position;
+            if (viewDir.sqrMagnitude < 1e-6f) continue;
+            Quaternion targetRot = Quaternion.LookRotation(viewDir, cameraPose.rotation * Vector3.up);
+            if (!IsFinite(targetRot)) continue;
+
+            bool justSpawned = false;
             if (!spawnedMarkers.TryGetValue(id, out var obj) || obj == null)
             {
                 if (isTail) obj = CreateDot(new UnityEngine.Color(1f, 0.5f, 0f));
                 else if (isHead) obj = CreateDot(new UnityEngine.Color(0.5f, 0f, 0.5f));
                 else obj = Instantiate(m.prefab);
                 spawnedMarkers[id] = obj;
+                justSpawned = true;
             }
-            obj.transform.SetPositionAndRotation(markerInWorld.GetColumn(3), markerInWorld.rotation);
+
+            // Smoothing: snap on first appearance, then glide toward each new pose.
+            if (justSpawned || !obj.activeSelf)
+            {
+                obj.transform.SetPositionAndRotation(targetPos, targetRot);
+            }
+            else
+            {
+                float t = 1f - Mathf.Exp(-smoothingSpeed * Time.deltaTime);
+                obj.transform.SetPositionAndRotation(
+                    Vector3.Lerp(obj.transform.position, targetPos, t),
+                    Quaternion.Slerp(obj.transform.rotation, targetRot, t));
+            }
             obj.SetActive(true);
         }
 
