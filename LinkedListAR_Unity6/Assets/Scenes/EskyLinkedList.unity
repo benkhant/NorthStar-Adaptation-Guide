@@ -197,12 +197,64 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3091048901010333637, guid: 25c64504c8f2de54a9af6df51f63fc53, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1505078465}
+    - targetCorrespondingSourceObject: {fileID: 7319324628200003803, guid: 25c64504c8f2de54a9af6df51f63fc53, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 258586594}
   m_SourcePrefab: {fileID: 100100000, guid: 25c64504c8f2de54a9af6df51f63fc53, type: 3}
 --- !u!4 &258586592 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6718190458253503926, guid: 25c64504c8f2de54a9af6df51f63fc53, type: 3}
   m_PrefabInstance: {fileID: 258586591}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &258586593 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7319324628200003803, guid: 25c64504c8f2de54a9af6df51f63fc53, type: 3}
+  m_PrefabInstance: {fileID: 258586591}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &258586594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258586593}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &331411221
 GameObject:
   m_ObjectHideFlags: 0
@@ -740,6 +792,7 @@ MonoBehaviour:
   gridSize: 0.045
   marginSize: 0.009
   showDebugInfo: 1
+  smoothingSpeed: 15
 --- !u!20 &1721389045 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 535847617788999898, guid: 25c64504c8f2de54a9af6df51f63fc53, type: 3}
