@@ -1,0 +1,23 @@
+{
+    "name": "BEERLabs.ProjectEsky.Networking.WebRTC.Core",
+    "rootNamespace": "BEERLabs.ProjectEsky.Networking.WebRTC",
+    "references": [
+        "Unity.WebRTC"
+    ],
+    "includePlatforms": [
+        "Android",
+        "Editor",
+        "iOS",
+        "LinuxStandalone64",
+        "macOSStandalone",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
