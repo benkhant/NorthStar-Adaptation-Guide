@@ -51,6 +51,7 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
     private OpenCvSharp.Aruco.Dictionary dictionary;
 
     [SerializeField] private float smoothingSpeed = 15f;
+    [SerializeField] private bool verboseLogs = false;
 
     static bool IsFinite(Vector3 v) =>
         float.IsFinite(v.x) && float.IsFinite(v.y) && float.IsFinite(v.z);
@@ -213,8 +214,11 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
         if (dictionary == null) { img.Dispose(); return; }
 
         CvAruco.DetectMarkers(img, dictionary, out var corners, out var ids, parameters, out var rejected);
-        foreach (var id in ids) Debug.Log("[EskyCvAruco] Saw marker ID: " + id);
-        Debug.Log("[EskyCvAruco] Detected: " + ids.Length + " markers, Rejected candidates: " + rejected.Length);
+        if (verboseLogs)
+        {
+            foreach (var id in ids) Debug.Log("[EskyCvAruco] Saw marker ID: " + id);
+            Debug.Log("[EskyCvAruco] Detected: " + ids.Length + " markers, Rejected candidates: " + rejected.Length);
+        }
 
         if (prefabLookup == null) BuildPrefabLookup();
 
@@ -282,7 +286,7 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
             float camDist = (float)tvec.Item2;
             if (!IsFinite(targetPos) || !markerInWorld.ValidTRS() || camDist < 0.05f || camDist > 3f)
             {
-                Debug.Log($"[EskyCvAruco] Rejected pose for ID {id}: camDist={camDist}, pos={targetPos}");
+                if (verboseLogs) Debug.Log($"[EskyCvAruco] Rejected pose for ID {id}: camDist={camDist}, pos={targetPos}");
                 continue;
             }
             //Quaternion targetRot = markerInWorld.rotation;
