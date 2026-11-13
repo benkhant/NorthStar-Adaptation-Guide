@@ -52,6 +52,7 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
 
     [SerializeField] private float smoothingSpeed = 15f;
     [SerializeField] private bool verboseLogs = false;
+    [SerializeField] private Transform cameraMount;   // T265 lens on the headset; child of Head
 
     static bool IsFinite(Vector3 v) =>
         float.IsFinite(v.x) && float.IsFinite(v.y) && float.IsFinite(v.z);
@@ -146,7 +147,12 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
         intrinsicsReady = true;
     }
 
-    private Pose GetActiveCameraPose() => new Pose(arCameraTransform.position, arCameraTransform.rotation);
+    private Pose GetActiveCameraPose()
+    {
+        // Marker poses are measured from the T265 lens, so use the mount if one is set.
+        Transform t = cameraMount != null ? cameraMount : arCameraTransform;
+        return new Pose(t.position, t.rotation);
+    }
 
     private void OnImageReceived(ImageData d)
     {
@@ -293,9 +299,9 @@ public class EskyAROpenCVMarkerTracking : MonoBehaviour
             //if (!IsFinite(targetRot)) continue;
 
             // Face the node toward the viewer instead of copying the card's tilt.
-            Vector3 viewDir = targetPos - cameraPose.position;
+            Vector3 viewDir = targetPos - arCameraTransform.position;
             if (viewDir.sqrMagnitude < 1e-6f) continue;
-            Quaternion targetRot = Quaternion.LookRotation(viewDir, cameraPose.rotation * Vector3.up);
+            Quaternion targetRot = Quaternion.LookRotation(viewDir, arCameraTransform.rotation * Vector3.up);
             if (!IsFinite(targetRot)) continue;
 
             bool justSpawned = false;
